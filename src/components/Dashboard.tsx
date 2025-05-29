@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,7 +34,11 @@ const Dashboard = () => {
       if (isAnalyzing) return;
       
       const url = URL.createObjectURL(file);
-      console.log('Starting file upload and analysis...');
+      console.log('Starting file upload and analysis...', {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size
+      });
       
       setUploadedModel(url);
       setIsAnalyzing(true);
@@ -129,7 +134,7 @@ const Dashboard = () => {
                 Upload 3D Model
               </CardTitle>
               <CardDescription className="text-blue-200">
-                Upload your .glb or .gltf car model to begin aerodynamic analysis
+                Upload your car model for aerodynamic analysis. For best results, use GLB format (self-contained).
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -145,7 +150,8 @@ const Dashboard = () => {
                 <label htmlFor="model-upload" className="cursor-pointer">
                   <Upload className="h-16 w-16 text-blue-300 mx-auto mb-4" />
                   <p className="text-xl text-white mb-2">Drop your 3D model here</p>
-                  <p className="text-blue-200">Supports .GLB and .GLTF formats</p>
+                  <p className="text-blue-200 mb-2">Supports .GLB and .GLTF formats</p>
+                  <p className="text-blue-300 text-sm">Recommended: Use GLB format for better compatibility</p>
                   <Button className="mt-4 bg-blue-600 hover:bg-blue-700">
                     Browse Files
                   </Button>
