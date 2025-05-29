@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ const Dashboard = () => {
   const [dragCoefficient, setDragCoefficient] = useState<number | null>(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Debug logging for state changes
   useEffect(() => {
@@ -28,6 +29,9 @@ const Dashboard = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
+      // Prevent multiple uploads while analyzing
+      if (isAnalyzing) return;
+      
       const url = URL.createObjectURL(file);
       console.log('Starting file upload and analysis...');
       
@@ -46,6 +50,11 @@ const Dashboard = () => {
         setAnalysisComplete(true);
         setIsAnalyzing(false);
       }, 2000);
+    }
+    
+    // Clear the input value to prevent issues with re-uploads
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -85,8 +94,8 @@ const Dashboard = () => {
     }
   };
 
-  // Force render check
-  const shouldShowResults = !isAnalyzing && analysisComplete && dragCoefficient !== null;
+  // Stable render conditions to prevent flickering
+  const shouldShowResults = uploadedModel && !isAnalyzing && analysisComplete && dragCoefficient !== null;
   const shouldShowImprovements = shouldShowResults;
 
   console.log('Render conditions:', {
@@ -94,7 +103,8 @@ const Dashboard = () => {
     shouldShowImprovements,
     dragCoefficient,
     analysisComplete,
-    isAnalyzing
+    isAnalyzing,
+    hasUploadedModel: !!uploadedModel
   });
 
   return (
@@ -125,6 +135,7 @@ const Dashboard = () => {
             <CardContent>
               <div className="border-2 border-dashed border-blue-300/50 rounded-lg p-12 text-center hover:border-blue-300/70 transition-colors">
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept=".glb,.gltf"
                   onChange={handleFileUpload}
