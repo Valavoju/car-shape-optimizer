@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,18 +13,23 @@ const Dashboard = () => {
   const [uploadedModel, setUploadedModel] = useState<string | null>(null);
   const [dragCoefficient, setDragCoefficient] = useState<number | null>(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
       const url = URL.createObjectURL(file);
       setUploadedModel(url);
+      setIsAnalyzing(true);
+      setAnalysisComplete(false);
+      setDragCoefficient(null);
       
       // Simulate analysis delay
       setTimeout(() => {
         const randomDrag = 0.30 + Math.random() * 0.15;
         setDragCoefficient(Number(randomDrag.toFixed(3)));
         setAnalysisComplete(true);
+        setIsAnalyzing(false);
       }, 2000);
     }
   };
@@ -138,23 +142,27 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {analysisComplete ? (
+                  {isAnalyzing ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                      <p className="text-blue-200">Analyzing aerodynamics...</p>
+                    </div>
+                  ) : analysisComplete && dragCoefficient ? (
                     <div className="text-center">
                       <div className="text-4xl font-bold text-white mb-2">
                         {dragCoefficient}
                       </div>
                       <p className="text-blue-200 mb-4">Coefficient of Drag (Cd)</p>
                       <Badge 
-                        variant={dragCoefficient! < 0.35 ? "default" : "destructive"}
+                        variant={dragCoefficient < 0.35 ? "default" : "destructive"}
                         className="text-sm"
                       >
-                        {dragCoefficient! < 0.35 ? "Excellent" : "Needs Improvement"}
+                        {dragCoefficient < 0.35 ? "Excellent" : "Needs Improvement"}
                       </Badge>
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-                      <p className="text-blue-200">Analyzing aerodynamics...</p>
+                      <p className="text-blue-200">Upload a model to begin analysis</p>
                     </div>
                   )}
                 </CardContent>
@@ -179,7 +187,7 @@ const Dashboard = () => {
         )}
 
         {/* Improvement Suggestions */}
-        {analysisComplete && (
+        {analysisComplete && dragCoefficient && (
           <Card className="mb-8 bg-white/10 border-blue-300/30 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
