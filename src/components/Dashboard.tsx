@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,22 @@ const Dashboard = () => {
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('State update:', {
+      uploadedModel: !!uploadedModel,
+      dragCoefficient,
+      analysisComplete,
+      isAnalyzing
+    });
+  }, [uploadedModel, dragCoefficient, analysisComplete, isAnalyzing]);
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
       const url = URL.createObjectURL(file);
+      console.log('Starting file upload and analysis...');
+      
       setUploadedModel(url);
       setIsAnalyzing(true);
       setAnalysisComplete(false);
@@ -27,7 +39,10 @@ const Dashboard = () => {
       // Simulate analysis delay
       setTimeout(() => {
         const randomDrag = 0.30 + Math.random() * 0.15;
-        setDragCoefficient(Number(randomDrag.toFixed(3)));
+        const finalDrag = Number(randomDrag.toFixed(3));
+        console.log('Analysis complete, setting drag coefficient:', finalDrag);
+        
+        setDragCoefficient(finalDrag);
         setAnalysisComplete(true);
         setIsAnalyzing(false);
       }, 2000);
@@ -69,6 +84,18 @@ const Dashboard = () => {
       default: return 'bg-gray-500';
     }
   };
+
+  // Force render check
+  const shouldShowResults = !isAnalyzing && analysisComplete && dragCoefficient !== null;
+  const shouldShowImprovements = shouldShowResults;
+
+  console.log('Render conditions:', {
+    shouldShowResults,
+    shouldShowImprovements,
+    dragCoefficient,
+    analysisComplete,
+    isAnalyzing
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
@@ -147,7 +174,7 @@ const Dashboard = () => {
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
                       <p className="text-blue-200">Analyzing aerodynamics...</p>
                     </div>
-                  ) : analysisComplete && dragCoefficient ? (
+                  ) : shouldShowResults ? (
                     <div className="text-center">
                       <div className="text-4xl font-bold text-white mb-2">
                         {dragCoefficient}
@@ -187,7 +214,7 @@ const Dashboard = () => {
         )}
 
         {/* Improvement Suggestions */}
-        {analysisComplete && dragCoefficient && (
+        {shouldShowImprovements && (
           <Card className="mb-8 bg-white/10 border-blue-300/30 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
