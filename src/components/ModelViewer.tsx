@@ -1,8 +1,8 @@
-
 import { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Environment, ContactShadows } from '@react-three/drei';
 import { AlertTriangle } from 'lucide-react';
+import * as THREE from 'three';
 
 interface ModelProps {
   url: string;
@@ -21,11 +21,15 @@ const Model = ({ url, onError, onLoad }: ModelProps) => {
     const loadModel = async () => {
       try {
         console.log('Model component: Attempting to load GLTF...');
-        const { scene } = await useGLTF.preload(url);
-        console.log('Model component: GLTF loaded successfully');
-        setLoadingState('loaded');
-        onLoad();
-        return scene;
+        const gltf = await useGLTF.preload(url);
+        if (gltf && gltf.scene) {
+          console.log('Model component: GLTF loaded successfully');
+          setLoadingState('loaded');
+          onLoad();
+          return gltf.scene;
+        } else {
+          throw new Error('Invalid GLTF file structure');
+        }
       } catch (error) {
         console.error('Model component: GLTF loading failed:', error);
         setLoadingState('error');
@@ -42,11 +46,18 @@ const Model = ({ url, onError, onLoad }: ModelProps) => {
   }
 
   try {
-    const { scene } = useGLTF(url);
+    const gltf = useGLTF(url);
+    
+    if (!gltf || !gltf.scene) {
+      console.error('Model component: Invalid GLTF structure');
+      onError('Invalid 3D model file structure');
+      return null;
+    }
+
     console.log('Model component: Rendering GLTF scene');
     
     // Apply a fallback material to handle missing textures
-    scene.traverse((child: any) => {
+    gltf.scene.traverse((child: any) => {
       if (child.isMesh && child.material) {
         // If the material has issues loading textures, apply a fallback
         if (child.material.map && !child.material.map.image) {
@@ -60,7 +71,7 @@ const Model = ({ url, onError, onLoad }: ModelProps) => {
       }
     });
 
-    return <primitive object={scene} scale={[1, 1, 1]} />;
+    return <primitive object={gltf.scene} scale={[1, 1, 1]} />;
   } catch (error) {
     console.error('Model component: Error during rendering:', error);
     onError('Model rendering error. Please try a different file format.');
