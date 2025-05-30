@@ -1,185 +1,148 @@
-import { Suspense, useState, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, ContactShadows } from '@react-three/drei';
-import { AlertTriangle } from 'lucide-react';
+
+import { Suspense, useRef, useState } from 'react';
+import { Canvas, useFrame, useLoader } from '@react-three/fiber';
+import { OrbitControls, Environment } from '@react-three/drei';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
 
 interface ModelProps {
   url: string;
-  onError: (error: string) => void;
-  onLoad: () => void;
 }
 
-const Model = ({ url, onError, onLoad }: ModelProps) => {
-  const [loadingState, setLoadingState] = useState<'loading' | 'loaded' | 'error'>('loading');
+const Model = ({ url }: ModelProps) => {
+  const meshRef = useRef<THREE.Group>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log('Model component: Starting to load model from URL:', url);
-    setLoadingState('loading');
-
-    // Create a promise to handle the GLTF loading
-    const loadModel = async () => {
-      try {
-        console.log('Model component: Attempting to load GLTF...');
-        const gltf = await useGLTF.preload(url);
-        if (gltf && gltf.scene) {
-          console.log('Model component: GLTF loaded successfully');
-          setLoadingState('loaded');
-          onLoad();
-          return gltf.scene;
-        } else {
-          throw new Error('Invalid GLTF file structure');
-        }
-      } catch (error) {
-        console.error('Model component: GLTF loading failed:', error);
-        setLoadingState('error');
-        onError('Failed to load 3D model. Please try uploading a GLB file instead of GLTF for better compatibility.');
-        return null;
-      }
-    };
-
-    loadModel();
-  }, [url, onError, onLoad]);
-
-  if (loadingState === 'error') {
-    return null;
-  }
-
+  let gltf;
   try {
-    const gltf = useGLTF(url);
-    
-    if (!gltf || !gltf.scene) {
-      console.error('Model component: Invalid GLTF structure');
-      onError('Invalid 3D model file structure');
-      return null;
-    }
-
-    console.log('Model component: Rendering GLTF scene');
-    
-    // Apply a fallback material to handle missing textures
-    gltf.scene.traverse((child: any) => {
-      if (child.isMesh && child.material) {
-        // If the material has issues loading textures, apply a fallback
-        if (child.material.map && !child.material.map.image) {
-          console.log('Model component: Applying fallback material for missing texture');
-          child.material = new THREE.MeshStandardMaterial({ 
-            color: 0x808080,
-            metalness: 0.1,
-            roughness: 0.8
-          });
-        }
-      }
-    });
-
-    return <primitive object={gltf.scene} scale={[1, 1, 1]} />;
-  } catch (error) {
-    console.error('Model component: Error during rendering:', error);
-    onError('Model rendering error. Please try a different file format.');
+    gltf = useLoader(GLTFLoader, url);
+  } catch (err) {
+    console.error('Failed to load GLTF model:', err);
+    setError('Failed to load 3D model. Please try using a GLB file format.');
     return null;
   }
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime) * 0.1;
+    }
+  });
+
+  if (error) {
+    return (
+      <mesh>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="red" />
+      </mesh>
+    );
+  }
+
+  if (!gltf || !gltf.scene) {
+    return null;
+  }
+
+  // Clone the scene to avoid issues with multiple instances
+  const clonedScene = gltf.scene.clone();
+  
+  // Scale and center the model
+  const box = new THREE.Box3().setFromObject(clonedScene);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 2 / maxDim;
+  
+  clonedScene.scale.setScalar(scale);
+  clonedScene.position.sub(center.multiplyScalar(scale));
+
+  return (
+    <group ref={meshRef}>
+      <primitive object={clonedScene} />
+    </group>
+  );
 };
+
+const LoadingSpinner = () => (
+  <mesh>
+    <boxGeometry args={[0.5, 0.5, 0.5]} />
+    <meshStandardMaterial color="#3b82f6" />
+  </mesh>
+);
+
+const ErrorModel = () => (
+  <group>
+    <mesh>
+      <boxGeometry args={[2, 1, 0.5]} />
+      <meshStandardMaterial color="#ef4444" />
+    </mesh>
+    <mesh position={[0, 1.2, 0]}>
+      <boxGeometry args={[0.1, 0.3, 0.1]} />
+      <meshStandardMaterial color="#fbbf24" />
+    </mesh>
+  </group>
+);
 
 interface ModelViewerProps {
   modelUrl: string;
 }
 
 const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
-  console.log('ModelViewer: Rendering with URL:', modelUrl);
-
-  useEffect(() => {
-    console.log('ModelViewer: Effect triggered, resetting state for new model');
-    setError(null);
-    setIsLoading(true);
-  }, [modelUrl]);
-
-  const handleError = (errorMessage: string) => {
-    console.error('ModelViewer: Handling error:', errorMessage);
-    setError(errorMessage);
-    setIsLoading(false);
+  const handleError = () => {
+    console.error('Model loading failed for URL:', modelUrl);
+    setHasError(true);
   };
 
-  const handleLoad = () => {
-    console.log('ModelViewer: Model loaded successfully');
-    setIsLoading(false);
-    setError(null);
-  };
-
-  const handleCanvasError = (event: any) => {
-    console.error('ModelViewer: Canvas error:', event);
-    handleError('3D rendering initialization failed');
-  };
-
-  if (error) {
+  if (hasError) {
     return (
-      <div className="w-full h-full rounded-lg overflow-hidden bg-gradient-to-b from-red-900 to-slate-800 flex items-center justify-center">
-        <div className="text-center p-6">
-          <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-          <p className="text-red-200 text-sm mb-2">Model Loading Error</p>
-          <p className="text-red-300 text-xs max-w-sm">
-            {error}
-          </p>
-          <p className="text-red-400 text-xs mt-2">
-            Tip: GLB files work better than GLTF files as they contain all textures internally.
-          </p>
+      <div className="w-full h-full flex items-center justify-center bg-gray-900 rounded-lg">
+        <div className="text-center">
+          <p className="text-red-400 mb-2">Model Loading Error</p>
+          <p className="text-gray-400 text-sm">Please try uploading a GLB file</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden bg-gradient-to-b from-blue-900 to-slate-800 relative">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-blue-900/50 z-10">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
-            <p className="text-blue-200 text-sm">Loading 3D model...</p>
-          </div>
-        </div>
-      )}
-      <Canvas
-        camera={{ position: [5, 5, 5], fov: 50 }}
-        className="w-full h-full"
-        onError={handleCanvasError}
-        gl={{ 
-          antialias: true,
-          alpha: true,
-          preserveDrawingBuffer: true
-        }}
-      >
-        <Suspense 
-          fallback={
-            <mesh>
-              <boxGeometry args={[1, 1, 1]} />
-              <meshStandardMaterial color="#3b82f6" wireframe />
-            </mesh>
-          }
-        >
-          <Environment preset="studio" />
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
-          <Model url={modelUrl} onError={handleError} onLoad={handleLoad} />
-          <ContactShadows 
-            opacity={0.4} 
-            scale={10} 
-            blur={1} 
-            far={10} 
-            resolution={256} 
-            color="#000000" 
-          />
-          <OrbitControls 
-            enableZoom={true} 
-            enablePan={true} 
-            enableRotate={true}
-            maxDistance={20}
-            minDistance={2}
-          />
+    <div className="w-full h-full bg-gray-900 rounded-lg overflow-hidden">
+      <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[10, 10, 5]} intensity={1} />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} />
+        
+        <Suspense fallback={<LoadingSpinner />}>
+          <ErrorBoundary fallback={<ErrorModel />} onError={handleError}>
+            <Model url={modelUrl} />
+          </ErrorBoundary>
         </Suspense>
+        
+        <OrbitControls 
+          enablePan={true}
+          enableZoom={true}
+          enableRotate={true}
+          maxDistance={10}
+          minDistance={1}
+        />
+        <Environment preset="studio" />
       </Canvas>
     </div>
   );
+};
+
+// Simple error boundary component
+const ErrorBoundary = ({ children, fallback, onError }: { 
+  children: React.ReactNode; 
+  fallback: React.ReactNode;
+  onError: () => void;
+}) => {
+  try {
+    return <>{children}</>;
+  } catch (error) {
+    console.error('Error boundary caught:', error);
+    onError();
+    return <>{fallback}</>;
+  }
 };
 
 export default ModelViewer;
