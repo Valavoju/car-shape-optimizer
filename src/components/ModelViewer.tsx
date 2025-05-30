@@ -37,6 +37,11 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
     setError(errorMessage);
   };
 
+  const handleCanvasError = (event: any) => {
+    console.error('Canvas error:', event);
+    handleError('3D rendering error occurred');
+  };
+
   if (error) {
     return (
       <div className="w-full h-full rounded-lg overflow-hidden bg-gradient-to-b from-red-900 to-slate-800 flex items-center justify-center">
@@ -57,7 +62,7 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
       <Canvas
         camera={{ position: [5, 5, 5], fov: 50 }}
         className="w-full h-full"
-        onError={(error) => handleError(error.message)}
+        onError={handleCanvasError}
       >
         <Suspense 
           fallback={

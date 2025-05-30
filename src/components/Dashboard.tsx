@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import ModelViewer from './ModelViewer';
 import ErgonomicsTab from './ErgonomicsTab';
 import NvhTab from './NvhTab';
 import MaterialOptimizerTab from './MaterialOptimizerTab';
+import CatiaCopilot from './CatiaCopilot';
 
 const Dashboard = () => {
   const [uploadedModel, setUploadedModel] = useState<string | null>(null);
@@ -121,7 +121,7 @@ const Dashboard = () => {
             Automotive CFD Analysis Suite
           </h1>
           <p className="text-blue-200 text-lg">
-            Advanced aerodynamic optimization for automotive design
+            Advanced aerodynamic optimization with integrated CATIA copilot
           </p>
         </div>
 
@@ -159,6 +159,13 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* CATIA Copilot Section */}
+        {!uploadedModel && (
+          <div className="mb-8">
+            <CatiaCopilot />
+          </div>
         )}
 
         {/* Main Dashboard */}
@@ -271,8 +278,14 @@ const Dashboard = () => {
 
         {/* Analysis Tabs */}
         {uploadedModel && (
-          <Tabs defaultValue="ergonomics" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-white/10 border-blue-300/30">
+          <Tabs defaultValue="catia" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 bg-white/10 border-blue-300/30">
+              <TabsTrigger 
+                value="catia" 
+                className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-blue-200"
+              >
+                CATIA Copilot
+              </TabsTrigger>
               <TabsTrigger 
                 value="ergonomics" 
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-blue-200"
@@ -292,6 +305,10 @@ const Dashboard = () => {
                 Material Optimizer
               </TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="catia">
+              <CatiaCopilot />
+            </TabsContent>
             
             <TabsContent value="ergonomics">
               <ErgonomicsTab />
