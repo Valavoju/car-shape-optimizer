@@ -3,7 +3,8 @@ import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Upload, Image, FileImage } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Search, Upload, Image, Key, Bot } from 'lucide-react';
 
 interface CatiaMessage {
   id: string;
@@ -64,15 +65,49 @@ const CatiaCopilot = () => {
     {
       id: '1',
       type: 'assistant',
-      content: "Hello! I'm your CATIA Copilot. I can help you with CATIA tools, analyze your designs, and provide suggestions. You can ask me about any CATIA functionality, upload images for analysis, or get detailed information about specific tools.",
+      content: "Hello! I'm your AI-powered CATIA Copilot with Gemini integration. I can help you with CATIA tools, analyze your designs, and provide expert suggestions. You can ask me about any CATIA functionality, upload images for analysis, or get detailed information about specific tools.",
       timestamp: new Date()
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [selectedTool, setSelectedTool] = useState<CatiaTool | null>(null);
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSendMessage = () => {
+  const callGeminiAPI = async (prompt: string): Promise<string> => {
+    if (!geminiApiKey) {
+      return "Please enter your Gemini API key to use AI-powered responses. You can get one from Google AI Studio.";
+    }
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are a CATIA expert assistant. Answer the following question about CATIA tools, workflows, or design optimization: ${prompt}`
+            }]
+          }]
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from Gemini API');
+      }
+
+      const data = await response.json();
+      return data.candidates[0].content.parts[0].text;
+    } catch (error) {
+      console.error('Gemini API error:', error);
+      return "I'm having trouble connecting to the AI service. Please check your API key and try again.";
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
     const userMessage: CatiaMessage = {
@@ -83,49 +118,24 @@ const CatiaCopilot = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const response = generateCatiaResponse(inputMessage);
-      const assistantMessage: CatiaMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: response,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-    }, 1000);
-
+    // Get AI response
+    const aiResponse = await callGeminiAPI(inputMessage);
+    
+    const assistantMessage: CatiaMessage = {
+      id: (Date.now() + 1).toString(),
+      type: 'assistant',
+      content: aiResponse,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, assistantMessage]);
+    setIsLoading(false);
     setInputMessage('');
   };
 
-  const generateCatiaResponse = (question: string): string => {
-    const lowerQuestion = question.toLowerCase();
-    
-    if (lowerQuestion.includes('part design')) {
-      return "Part Design is CATIA's core solid modeling workbench. Key features include: Sketcher for 2D profiles, Pad/Pocket for extrusions, Shaft/Groove for revolutions, Boolean operations, Fillets/Chamfers, Patterns, and the Feature Tree for parametric history. Would you like me to explain any specific Part Design operation?";
-    }
-    
-    if (lowerQuestion.includes('assembly')) {
-      return "Assembly Design in CATIA manages complex product structures. Key capabilities: Constraint-based assembly (Coincidence, Contact, Offset, Angle, Fix), Interference detection, Exploded views, Section cuts, DMU Navigator for large assemblies, and Bills of Materials. Need help with specific assembly constraints?";
-    }
-    
-    if (lowerQuestion.includes('surface') || lowerQuestion.includes('gsd')) {
-      return "Generative Shape Design (GSD) creates complex surfaces and wireframes. Main tools: Sweep, Loft, Fill, Blend for surfaces; Spline, Helix, Intersection for curves; Join, Healing, Extrapolate for surface operations. Essential for automotive and aerospace Class-A surfacing.";
-    }
-    
-    if (lowerQuestion.includes('sketch')) {
-      return "Sketcher is fundamental to CATIA modeling. Core elements: Geometric elements (lines, arcs, circles, splines), Constraints (horizontal, vertical, parallel, perpendicular, tangent), Dimensions (length, radius, angle), and Operations (trim, extend, offset). Fully constrained sketches ensure robust parametric models.";
-    }
-    
-    if (lowerQuestion.includes('simulation') || lowerQuestion.includes('analysis')) {
-      return "CATIA offers multiple simulation tools: DMU Kinematics for motion analysis, GPS for tolerance analysis, CATIA Analysis for FEA, Interference Detection, Clash Detection, and DMU Review for design validation. Which type of analysis are you interested in?";
-    }
-    
-    return `I understand you're asking about "${question}". CATIA has extensive capabilities in this area. Could you be more specific about what aspect you'd like to explore? I can provide detailed guidance on any CATIA workbench, tool, or workflow.`;
-  };
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
       const url = URL.createObjectURL(file);
@@ -138,28 +148,61 @@ const CatiaCopilot = () => {
       };
 
       setMessages(prev => [...prev, userMessage]);
+      setIsLoading(true);
 
-      // Simulate AI image analysis response
-      setTimeout(() => {
-        const assistantMessage: CatiaMessage = {
-          id: (Date.now() + 1).toString(),
-          type: 'assistant',
-          content: "Based on your uploaded image, I can suggest several CATIA approaches: 1) If this is a mechanical part, use Part Design for solid modeling. 2) For complex curves, consider Generative Shape Design. 3) For assembly components, plan your constraint strategy in Assembly Design. 4) Consider using Sketcher to recreate key profiles. Would you like specific guidance on any of these approaches?",
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-      }, 1500);
+      const analysisPrompt = "Analyze this engineering/design image and suggest relevant CATIA tools and workflows that could be used to create or improve this design. Focus on specific CATIA workbenches and features.";
+      const aiResponse = await callGeminiAPI(analysisPrompt);
+      
+      const assistantMessage: CatiaMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: aiResponse,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      setIsLoading(false);
     }
   };
 
   const handleToolSelection = (tool: CatiaTool) => {
     setSelectedTool(tool);
-    const message = `Tell me more about ${tool.name}`;
+    const message = `Tell me more about ${tool.name} and provide advanced tips for using it effectively`;
     setInputMessage(message);
   };
 
   return (
     <div className="space-y-6">
+      {/* API Key Input */}
+      <Card className="bg-white/10 border-orange-300/30 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            Gemini API Configuration
+          </CardTitle>
+          <CardDescription className="text-orange-200">
+            Enter your Gemini API key to enable AI-powered CATIA assistance
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={geminiApiKey}
+              onChange={(e) => setGeminiApiKey(e.target.value)}
+              placeholder="Enter your Gemini API key..."
+              className="bg-white/5 border-orange-300/30 text-white placeholder-orange-300/70"
+            />
+            <Button
+              onClick={() => window.open('https://makersuite.google.com/app/apikey', '_blank')}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Get API Key
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* CATIA Tools Overview */}
       <Card className="bg-white/10 border-orange-300/30 backdrop-blur-sm">
         <CardHeader>
@@ -199,14 +242,15 @@ const CatiaCopilot = () => {
         </CardContent>
       </Card>
 
-      {/* Chat Interface */}
+      {/* AI Chat Interface */}
       <Card className="bg-white/10 border-orange-300/30 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            🤖 CATIA Copilot Chat
+            <Bot className="h-5 w-5" />
+            AI-Powered CATIA Assistant
           </CardTitle>
           <CardDescription className="text-orange-200">
-            Ask me anything about CATIA tools, upload images for analysis, or get design suggestions
+            Ask me anything about CATIA tools, upload images for analysis, or get expert design suggestions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -229,13 +273,23 @@ const CatiaCopilot = () => {
                       className="max-w-full h-32 object-cover rounded mb-2"
                     />
                   )}
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   <p className="text-xs opacity-70 mt-1">
                     {message.timestamp.toLocaleTimeString()}
                   </p>
                 </div>
               </div>
             ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-white/10 text-orange-100 max-w-[80%] p-3 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-400"></div>
+                    <p className="text-sm">AI is thinking...</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input Area */}
@@ -244,9 +298,10 @@ const CatiaCopilot = () => {
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
               placeholder="Ask about CATIA tools, workflows, or best practices..."
               className="flex-1 p-3 rounded-lg bg-white/5 border border-orange-300/30 text-white placeholder-orange-300/70 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              disabled={isLoading}
             />
             <input
               ref={fileInputRef}
@@ -258,12 +313,14 @@ const CatiaCopilot = () => {
             <Button
               onClick={() => fileInputRef.current?.click()}
               className="bg-orange-600 hover:bg-orange-700 text-white px-4"
+              disabled={isLoading}
             >
               <Image className="h-4 w-4" />
             </Button>
             <Button
               onClick={handleSendMessage}
               className="bg-orange-600 hover:bg-orange-700 text-white px-6"
+              disabled={isLoading || !inputMessage.trim()}
             >
               <Search className="h-4 w-4" />
             </Button>
@@ -274,24 +331,27 @@ const CatiaCopilot = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setInputMessage("What are the best practices for Part Design?")}
+              onClick={() => setInputMessage("What are the advanced features of Part Design workbench?")}
               className="border-orange-300/30 text-orange-200 hover:bg-orange-600/20"
+              disabled={isLoading}
             >
-              Part Design Tips
+              Advanced Part Design
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setInputMessage("How do I create complex assemblies?")}
+              onClick={() => setInputMessage("How do I optimize assembly performance in CATIA?")}
               className="border-orange-300/30 text-orange-200 hover:bg-orange-600/20"
+              disabled={isLoading}
             >
-              Assembly Guide
+              Assembly Optimization
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setInputMessage("Surface modeling workflow in CATIA")}
+              onClick={() => setInputMessage("Best practices for surface modeling workflow")}
               className="border-orange-300/30 text-orange-200 hover:bg-orange-600/20"
+              disabled={isLoading}
             >
               Surface Modeling
             </Button>
