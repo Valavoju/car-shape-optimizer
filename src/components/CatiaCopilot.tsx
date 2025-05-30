@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Upload, Image, Key, Bot } from 'lucide-react';
+import { Search, Upload, Image, Bot } from 'lucide-react';
 
 interface CatiaMessage {
   id: string;
@@ -65,23 +65,21 @@ const CatiaCopilot = () => {
     {
       id: '1',
       type: 'assistant',
-      content: "Hello! I'm your AI-powered CATIA Copilot with Gemini integration. I can help you with CATIA tools, analyze your designs, and provide expert suggestions. You can ask me about any CATIA functionality, upload images for analysis, or get detailed information about specific tools.",
+      content: "Hello! I'm your AI-powered CATIA expert assistant. I can help you with CATIA tools, workflows, design optimization, and answer any technical questions. Feel free to ask me anything about CATIA or upload images for analysis.",
       timestamp: new Date()
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [selectedTool, setSelectedTool] = useState<CatiaTool | null>(null);
-  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const callGeminiAPI = async (prompt: string): Promise<string> => {
-    if (!geminiApiKey) {
-      return "Please enter your Gemini API key to use AI-powered responses. You can get one from Google AI Studio.";
-    }
+  // Internal API key - in production, this should come from environment variables
+  const INTERNAL_GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
 
+  const callGeminiAPI = async (prompt: string): Promise<string> => {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${INTERNAL_GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,7 +87,7 @@ const CatiaCopilot = () => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are a CATIA expert assistant. Answer the following question about CATIA tools, workflows, or design optimization: ${prompt}`
+              text: `You are an expert CATIA assistant with deep knowledge of all CATIA workbenches, tools, and workflows. Answer the following question comprehensively and provide practical advice: ${prompt}`
             }]
           }]
         }),
@@ -103,7 +101,7 @@ const CatiaCopilot = () => {
       return data.candidates[0].content.parts[0].text;
     } catch (error) {
       console.error('Gemini API error:', error);
-      return "I'm having trouble connecting to the AI service. Please check your API key and try again.";
+      return "I'm having trouble processing your request right now. However, I can still help you with CATIA questions based on my knowledge. Please try rephrasing your question or ask about specific CATIA tools and workflows.";
     }
   };
 
@@ -173,36 +171,6 @@ const CatiaCopilot = () => {
 
   return (
     <div className="space-y-6">
-      {/* API Key Input */}
-      <Card className="bg-white/10 border-orange-300/30 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            Gemini API Configuration
-          </CardTitle>
-          <CardDescription className="text-orange-200">
-            Enter your Gemini API key to enable AI-powered CATIA assistance
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={geminiApiKey}
-              onChange={(e) => setGeminiApiKey(e.target.value)}
-              placeholder="Enter your Gemini API key..."
-              className="bg-white/5 border-orange-300/30 text-white placeholder-orange-300/70"
-            />
-            <Button
-              onClick={() => window.open('https://makersuite.google.com/app/apikey', '_blank')}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
-            >
-              Get API Key
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* CATIA Tools Overview */}
       <Card className="bg-white/10 border-orange-300/30 backdrop-blur-sm">
         <CardHeader>
