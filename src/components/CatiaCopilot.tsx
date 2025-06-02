@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Upload, Image, Bot } from 'lucide-react';
+import { Search, Upload, Image, Bot, Sun, Moon } from 'lucide-react';
 
 interface CatiaMessage {
   id: string;
@@ -72,10 +72,11 @@ const CatiaCopilot = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [selectedTool, setSelectedTool] = useState<CatiaTool | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Internal API key - in production, this should come from environment variables
-  const INTERNAL_GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+  // Your Gemini API key
+  const INTERNAL_GEMINI_API_KEY = "AIzaSyB1IsMsk-0_Q-eu1ZTP8ORYsgeslzdrSrw";
 
   const callGeminiAPI = async (prompt: string): Promise<string> => {
     try {
@@ -169,15 +170,44 @@ const CatiaCopilot = () => {
     setInputMessage(message);
   };
 
+  const themeClasses = isDarkTheme 
+    ? 'bg-gray-900 text-white'
+    : 'bg-gray-50 text-gray-900';
+
+  const cardClasses = isDarkTheme
+    ? 'bg-gray-800 border-gray-700'
+    : 'bg-white border-gray-200';
+
+  const accentClasses = isDarkTheme
+    ? 'text-orange-300'
+    : 'text-orange-600';
+
+  const mutedClasses = isDarkTheme
+    ? 'text-gray-300'
+    : 'text-gray-600';
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${themeClasses}`}>
+      {/* Theme Toggle */}
+      <div className="flex justify-end">
+        <Button
+          onClick={() => setIsDarkTheme(!isDarkTheme)}
+          variant="outline"
+          size="sm"
+          className={`${isDarkTheme ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`}
+        >
+          {isDarkTheme ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {isDarkTheme ? 'Light' : 'Dark'} Theme
+        </Button>
+      </div>
+
       {/* CATIA Tools Overview */}
-      <Card className="bg-white/10 border-orange-300/30 backdrop-blur-sm">
+      <Card className={cardClasses}>
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             🔧 CATIA Tools Overview
           </CardTitle>
-          <CardDescription className="text-orange-200">
+          <CardDescription className={mutedClasses}>
             Explore 5 essential CATIA workbenches and their capabilities
           </CardDescription>
         </CardHeader>
@@ -186,21 +216,25 @@ const CatiaCopilot = () => {
             {CATIA_TOOLS.map((tool, index) => (
               <div 
                 key={index}
-                className="p-4 rounded-lg bg-white/5 border border-orange-300/20 hover:bg-white/10 transition-colors cursor-pointer"
+                className={`p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer ${
+                  isDarkTheme 
+                    ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
+                    : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                }`}
                 onClick={() => handleToolSelection(tool)}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-white text-sm">{tool.name}</h4>
+                  <h4 className="font-semibold text-sm">{tool.name}</h4>
                   <Badge className="bg-orange-600 text-white text-xs">
                     {tool.category}
                   </Badge>
                 </div>
-                <p className="text-orange-200 text-xs mb-3">{tool.description}</p>
+                <p className={`text-xs mb-3 ${mutedClasses}`}>{tool.description}</p>
                 <div className="space-y-1">
                   {tool.benefits.slice(0, 2).map((benefit, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
-                      <span className="text-orange-300 text-xs">{benefit}</span>
+                      <span className={`text-xs ${accentClasses}`}>{benefit}</span>
                     </div>
                   ))}
                 </div>
@@ -211,19 +245,21 @@ const CatiaCopilot = () => {
       </Card>
 
       {/* AI Chat Interface */}
-      <Card className="bg-white/10 border-orange-300/30 backdrop-blur-sm">
+      <Card className={cardClasses}>
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
             AI-Powered CATIA Assistant
           </CardTitle>
-          <CardDescription className="text-orange-200">
+          <CardDescription className={mutedClasses}>
             Ask me anything about CATIA tools, upload images for analysis, or get expert design suggestions
           </CardDescription>
         </CardHeader>
         <CardContent>
           {/* Messages */}
-          <div className="h-64 overflow-y-auto mb-4 space-y-3 bg-black/20 rounded-lg p-4">
+          <div className={`h-64 overflow-y-auto mb-4 space-y-3 rounded-lg p-4 ${
+            isDarkTheme ? 'bg-gray-900' : 'bg-gray-100'
+          }`}>
             {messages.map((message) => (
               <div 
                 key={message.id}
@@ -232,7 +268,9 @@ const CatiaCopilot = () => {
                 <div className={`max-w-[80%] p-3 rounded-lg ${
                   message.type === 'user' 
                     ? 'bg-orange-600 text-white' 
-                    : 'bg-white/10 text-orange-100'
+                    : isDarkTheme
+                      ? 'bg-gray-700 text-gray-100'
+                      : 'bg-white text-gray-900 border border-gray-200'
                 }`}>
                   {message.image && (
                     <img 
@@ -250,7 +288,9 @@ const CatiaCopilot = () => {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white/10 text-orange-100 max-w-[80%] p-3 rounded-lg">
+                <div className={`max-w-[80%] p-3 rounded-lg ${
+                  isDarkTheme ? 'bg-gray-700 text-gray-100' : 'bg-white text-gray-900 border border-gray-200'
+                }`}>
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-400"></div>
                     <p className="text-sm">AI is thinking...</p>
@@ -268,7 +308,11 @@ const CatiaCopilot = () => {
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
               placeholder="Ask about CATIA tools, workflows, or best practices..."
-              className="flex-1 p-3 rounded-lg bg-white/5 border border-orange-300/30 text-white placeholder-orange-300/70 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className={`flex-1 p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                isDarkTheme 
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
               disabled={isLoading}
             />
             <input
@@ -300,7 +344,11 @@ const CatiaCopilot = () => {
               variant="outline"
               size="sm"
               onClick={() => setInputMessage("What are the advanced features of Part Design workbench?")}
-              className="border-orange-300/30 text-orange-200 hover:bg-orange-600/20"
+              className={`${
+                isDarkTheme 
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+              }`}
               disabled={isLoading}
             >
               Advanced Part Design
@@ -309,7 +357,11 @@ const CatiaCopilot = () => {
               variant="outline"
               size="sm"
               onClick={() => setInputMessage("How do I optimize assembly performance in CATIA?")}
-              className="border-orange-300/30 text-orange-200 hover:bg-orange-600/20"
+              className={`${
+                isDarkTheme 
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+              }`}
               disabled={isLoading}
             >
               Assembly Optimization
@@ -318,7 +370,11 @@ const CatiaCopilot = () => {
               variant="outline"
               size="sm"
               onClick={() => setInputMessage("Best practices for surface modeling workflow")}
-              className="border-orange-300/30 text-orange-200 hover:bg-orange-600/20"
+              className={`${
+                isDarkTheme 
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+              }`}
               disabled={isLoading}
             >
               Surface Modeling
@@ -329,9 +385,9 @@ const CatiaCopilot = () => {
 
       {/* Tool Detail Modal */}
       {selectedTool && (
-        <Card className="bg-white/10 border-orange-300/30 backdrop-blur-sm">
+        <Card className={cardClasses}>
           <CardHeader>
-            <CardTitle className="text-white">{selectedTool.name}</CardTitle>
+            <CardTitle>{selectedTool.name}</CardTitle>
             <Badge className="bg-orange-600 text-white w-fit">
               {selectedTool.category}
             </Badge>
@@ -339,20 +395,20 @@ const CatiaCopilot = () => {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <h4 className="text-orange-300 font-semibold mb-2">Description</h4>
-                <p className="text-orange-100 text-sm">{selectedTool.description}</p>
+                <h4 className={`font-semibold mb-2 ${accentClasses}`}>Description</h4>
+                <p className="text-sm">{selectedTool.description}</p>
               </div>
               <div>
-                <h4 className="text-orange-300 font-semibold mb-2">Usage</h4>
-                <p className="text-orange-100 text-sm">{selectedTool.usage}</p>
+                <h4 className={`font-semibold mb-2 ${accentClasses}`}>Usage</h4>
+                <p className="text-sm">{selectedTool.usage}</p>
               </div>
               <div>
-                <h4 className="text-orange-300 font-semibold mb-2">Key Benefits</h4>
+                <h4 className={`font-semibold mb-2 ${accentClasses}`}>Key Benefits</h4>
                 <ul className="space-y-1">
                   {selectedTool.benefits.map((benefit, idx) => (
                     <li key={idx} className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                      <span className="text-orange-100 text-sm">{benefit}</span>
+                      <span className="text-sm">{benefit}</span>
                     </li>
                   ))}
                 </ul>
