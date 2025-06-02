@@ -1,5 +1,5 @@
 
-import { Suspense, useRef, useState } from 'react';
+import React, { Suspense, useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -111,7 +111,7 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
   };
 
   // Reset error state when model URL changes
-  React.useEffect(() => {
+  useEffect(() => {
     setHasError(false);
   }, [modelUrl]);
 
