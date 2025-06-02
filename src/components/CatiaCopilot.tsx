@@ -3,8 +3,7 @@ import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Search, Upload, Image, Bot, Sun, Moon } from 'lucide-react';
+import { Search, Upload, Image, Bot } from 'lucide-react';
 
 interface CatiaMessage {
   id: string;
@@ -20,6 +19,10 @@ interface CatiaTool {
   description: string;
   usage: string;
   benefits: string[];
+}
+
+interface CatiaCopilotProps {
+  isDarkMode?: boolean;
 }
 
 const CATIA_TOOLS: CatiaTool[] = [
@@ -60,7 +63,7 @@ const CATIA_TOOLS: CatiaTool[] = [
   }
 ];
 
-const CatiaCopilot = () => {
+const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
   const [messages, setMessages] = useState<CatiaMessage[]>([
     {
       id: '1',
@@ -72,15 +75,13 @@ const CatiaCopilot = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [selectedTool, setSelectedTool] = useState<CatiaTool | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Your Gemini API key
-  const INTERNAL_GEMINI_API_KEY = "AIzaSyB1IsMsk-0_Q-eu1ZTP8ORYsgeslzdrSrw";
+  const GEMINI_API_KEY = "AIzaSyB1IsMsk-0_Q-eu1ZTP8ORYsgeslzdrSrw";
 
   const callGeminiAPI = async (prompt: string): Promise<string> => {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${INTERNAL_GEMINI_API_KEY}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +89,7 @@ const CatiaCopilot = () => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are an expert CATIA assistant with deep knowledge of all CATIA workbenches, tools, and workflows. Answer the following question comprehensively and provide practical advice: ${prompt}`
+              text: `You are an expert CATIA assistant with deep knowledge of all CATIA workbenches, tools, and workflows. Provide comprehensive and practical advice like ChatGPT would. Question: ${prompt}`
             }]
           }]
         }),
@@ -119,7 +120,6 @@ const CatiaCopilot = () => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Get AI response
     const aiResponse = await callGeminiAPI(inputMessage);
     
     const assistantMessage: CatiaMessage = {
@@ -170,37 +170,24 @@ const CatiaCopilot = () => {
     setInputMessage(message);
   };
 
-  const themeClasses = isDarkTheme 
+  const themeClasses = isDarkMode 
     ? 'bg-gray-900 text-white'
     : 'bg-gray-50 text-gray-900';
 
-  const cardClasses = isDarkTheme
+  const cardClasses = isDarkMode
     ? 'bg-gray-800 border-gray-700'
     : 'bg-white border-gray-200';
 
-  const accentClasses = isDarkTheme
+  const accentClasses = isDarkMode
     ? 'text-orange-300'
     : 'text-orange-600';
 
-  const mutedClasses = isDarkTheme
+  const mutedClasses = isDarkMode
     ? 'text-gray-300'
     : 'text-gray-600';
 
   return (
     <div className={`space-y-6 ${themeClasses}`}>
-      {/* Theme Toggle */}
-      <div className="flex justify-end">
-        <Button
-          onClick={() => setIsDarkTheme(!isDarkTheme)}
-          variant="outline"
-          size="sm"
-          className={`${isDarkTheme ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`}
-        >
-          {isDarkTheme ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {isDarkTheme ? 'Light' : 'Dark'} Theme
-        </Button>
-      </div>
-
       {/* CATIA Tools Overview */}
       <Card className={cardClasses}>
         <CardHeader>
@@ -217,7 +204,7 @@ const CatiaCopilot = () => {
               <div 
                 key={index}
                 className={`p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer ${
-                  isDarkTheme 
+                  isDarkMode 
                     ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
                     : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                 }`}
@@ -258,7 +245,7 @@ const CatiaCopilot = () => {
         <CardContent>
           {/* Messages */}
           <div className={`h-64 overflow-y-auto mb-4 space-y-3 rounded-lg p-4 ${
-            isDarkTheme ? 'bg-gray-900' : 'bg-gray-100'
+            isDarkMode ? 'bg-gray-900' : 'bg-gray-100'
           }`}>
             {messages.map((message) => (
               <div 
@@ -268,7 +255,7 @@ const CatiaCopilot = () => {
                 <div className={`max-w-[80%] p-3 rounded-lg ${
                   message.type === 'user' 
                     ? 'bg-orange-600 text-white' 
-                    : isDarkTheme
+                    : isDarkMode
                       ? 'bg-gray-700 text-gray-100'
                       : 'bg-white text-gray-900 border border-gray-200'
                 }`}>
@@ -289,7 +276,7 @@ const CatiaCopilot = () => {
             {isLoading && (
               <div className="flex justify-start">
                 <div className={`max-w-[80%] p-3 rounded-lg ${
-                  isDarkTheme ? 'bg-gray-700 text-gray-100' : 'bg-white text-gray-900 border border-gray-200'
+                  isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-white text-gray-900 border border-gray-200'
                 }`}>
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-400"></div>
@@ -309,7 +296,7 @@ const CatiaCopilot = () => {
               onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
               placeholder="Ask about CATIA tools, workflows, or best practices..."
               className={`flex-1 p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                isDarkTheme 
+                isDarkMode 
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                   : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
               }`}
@@ -345,7 +332,7 @@ const CatiaCopilot = () => {
               size="sm"
               onClick={() => setInputMessage("What are the advanced features of Part Design workbench?")}
               className={`${
-                isDarkTheme 
+                isDarkMode 
                   ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
                   : 'border-gray-300 text-gray-600 hover:bg-gray-100'
               }`}
@@ -358,7 +345,7 @@ const CatiaCopilot = () => {
               size="sm"
               onClick={() => setInputMessage("How do I optimize assembly performance in CATIA?")}
               className={`${
-                isDarkTheme 
+                isDarkMode 
                   ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
                   : 'border-gray-300 text-gray-600 hover:bg-gray-100'
               }`}
@@ -371,7 +358,7 @@ const CatiaCopilot = () => {
               size="sm"
               onClick={() => setInputMessage("Best practices for surface modeling workflow")}
               className={`${
-                isDarkTheme 
+                isDarkMode 
                   ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
                   : 'border-gray-300 text-gray-600 hover:bg-gray-100'
               }`}
