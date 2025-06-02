@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -189,12 +188,12 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
   };
 
   const themeClasses = isDarkMode 
-    ? 'bg-gray-900 text-white'
+    ? 'bg-gray-900 text-gray-100'
     : 'bg-white text-gray-900';
 
   const cardClasses = isDarkMode
-    ? 'bg-gray-800 border-gray-700'
-    : 'bg-gray-50 border-gray-200';
+    ? 'bg-gray-800 border-gray-700 text-gray-100'
+    : 'bg-gray-50 border-gray-200 text-gray-900';
 
   const accentClasses = isDarkMode
     ? 'text-orange-300'
@@ -205,7 +204,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
     : 'text-gray-700';
 
   const inputClasses = isDarkMode 
-    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400'
     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500';
 
   const buttonClasses = isDarkMode
@@ -217,7 +216,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
       {/* CATIA Tools Overview */}
       <Card className={cardClasses}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             🔧 CATIA Tools Overview
           </CardTitle>
           <CardDescription className={mutedClasses}>
@@ -231,13 +230,13 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
                 key={index}
                 className={`p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer ${
                   isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
-                    : 'bg-white border-gray-300 hover:bg-gray-100'
+                    ? 'bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-100' 
+                    : 'bg-white border-gray-300 hover:bg-gray-100 text-gray-900'
                 }`}
                 onClick={() => handleToolSelection(tool)}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-sm">{tool.name}</h4>
+                  <h4 className={`font-semibold text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{tool.name}</h4>
                   <Badge className="bg-orange-600 text-white text-xs">
                     {tool.category}
                   </Badge>
@@ -260,7 +259,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
       {/* AI Chat Interface */}
       <Card className={cardClasses}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             <Bot className="h-5 w-5" />
             AI-Powered CATIA Assistant
           </CardTitle>
@@ -384,7 +383,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
       {selectedTool && (
         <Card className={cardClasses}>
           <CardHeader>
-            <CardTitle>{selectedTool.name}</CardTitle>
+            <CardTitle className={isDarkMode ? 'text-gray-100' : 'text-gray-900'}>{selectedTool.name}</CardTitle>
             <Badge className="bg-orange-600 text-white w-fit">
               {selectedTool.category}
             </Badge>
@@ -393,11 +392,11 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
             <div className="space-y-4">
               <div>
                 <h4 className={`font-semibold mb-2 ${accentClasses}`}>Description</h4>
-                <p className="text-sm">{selectedTool.description}</p>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{selectedTool.description}</p>
               </div>
               <div>
                 <h4 className={`font-semibold mb-2 ${accentClasses}`}>Usage</h4>
-                <p className="text-sm">{selectedTool.usage}</p>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{selectedTool.usage}</p>
               </div>
               <div>
                 <h4 className={`font-semibold mb-2 ${accentClasses}`}>Key Benefits</h4>
@@ -405,7 +404,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
                   {selectedTool.benefits.map((benefit, idx) => (
                     <li key={idx} className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                      <span className="text-sm">{benefit}</span>
+                      <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{benefit}</span>
                     </li>
                   ))}
                 </ul>

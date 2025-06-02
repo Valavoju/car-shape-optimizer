@@ -5,7 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { User, Eye, Hand, Zap } from 'lucide-react';
 
-const ErgonomicsTab = () => {
+interface ErgonomicsTabProps {
+  isDarkMode?: boolean;
+}
+
+const ErgonomicsTab = ({ isDarkMode = true }: ErgonomicsTabProps) => {
   const ergonomicsData = [
     { metric: "Driver Visibility", score: 85, status: "Good", color: "bg-green-500" },
     { metric: "Seat Comfort", score: 92, status: "Excellent", color: "bg-blue-500" },
@@ -34,16 +38,23 @@ const ErgonomicsTab = () => {
     }
   ];
 
+  const cardClasses = isDarkMode
+    ? 'bg-gray-800 border-gray-700 text-gray-100'
+    : 'bg-gray-50 border-gray-200 text-gray-900';
+
+  const textClasses = isDarkMode ? 'text-gray-100' : 'text-gray-900';
+  const mutedTextClasses = isDarkMode ? 'text-gray-300' : 'text-gray-700';
+
   return (
     <div className="space-y-6 mt-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-white/10 border-blue-300/30 backdrop-blur-sm">
+        <Card className={cardClasses}>
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className={`${textClasses} flex items-center gap-2`}>
               <User className="h-5 w-5" />
               Ergonomic Scores
             </CardTitle>
-            <CardDescription className="text-blue-200">
+            <CardDescription className={mutedTextClasses}>
               Human factors analysis based on SAE standards
             </CardDescription>
           </CardHeader>
@@ -51,8 +62,8 @@ const ErgonomicsTab = () => {
             {ergonomicsData.map((item, index) => (
               <div key={index} className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-white text-sm font-medium">{item.metric}</span>
-                  <Badge variant="outline" className="text-white border-blue-300/50">
+                  <span className={`${textClasses} text-sm font-medium`}>{item.metric}</span>
+                  <Badge variant="outline" className={`${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-400 text-gray-700'}`}>
                     {item.score}%
                   </Badge>
                 </div>
@@ -65,25 +76,25 @@ const ErgonomicsTab = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/10 border-blue-300/30 backdrop-blur-sm">
+        <Card className={cardClasses}>
           <CardHeader>
-            <CardTitle className="text-white">Anthropometric Analysis</CardTitle>
-            <CardDescription className="text-blue-200">
+            <CardTitle className={textClasses}>Anthropometric Analysis</CardTitle>
+            <CardDescription className={mutedTextClasses}>
               Fit analysis for 5th-95th percentile users
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                <span className="text-blue-200">95th Percentile Male</span>
+              <div className={`flex justify-between items-center p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <span className={mutedTextClasses}>95th Percentile Male</span>
                 <Badge className="bg-green-600 text-white">Compatible</Badge>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                <span className="text-blue-200">5th Percentile Female</span>
+              <div className={`flex justify-between items-center p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <span className={mutedTextClasses}>5th Percentile Female</span>
                 <Badge className="bg-yellow-600 text-white">Marginal</Badge>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                <span className="text-blue-200">Wheelchair Access</span>
+              <div className={`flex justify-between items-center p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <span className={mutedTextClasses}>Wheelchair Access</span>
                 <Badge className="bg-red-600 text-white">Not Assessed</Badge>
               </div>
             </div>
@@ -91,9 +102,9 @@ const ErgonomicsTab = () => {
         </Card>
       </div>
 
-      <Card className="bg-white/10 border-blue-300/30 backdrop-blur-sm">
+      <Card className={cardClasses}>
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className={`${textClasses} flex items-center gap-2`}>
             <Zap className="h-5 w-5" />
             Optimization Recommendations
           </CardTitle>
@@ -101,12 +112,12 @@ const ErgonomicsTab = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {recommendations.map((rec, index) => (
-              <div key={index} className="p-4 bg-white/5 rounded-lg border border-blue-300/20">
+              <div key={index} className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-300'}`}>
                 <div className="flex items-center gap-2 mb-2">
                   {rec.icon}
-                  <h4 className="font-semibold text-white">{rec.area}</h4>
+                  <h4 className={`font-semibold ${textClasses}`}>{rec.area}</h4>
                 </div>
-                <p className="text-blue-200 text-sm mb-3">{rec.suggestion}</p>
+                <p className={`${mutedTextClasses} text-sm mb-3`}>{rec.suggestion}</p>
                 <Badge 
                   className={`${rec.impact === 'High' ? 'bg-red-500' : 'bg-yellow-500'} text-white`}
                 >
@@ -116,10 +127,10 @@ const ErgonomicsTab = () => {
             ))}
           </div>
           <div className="mt-6 flex gap-4">
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               Generate Report
             </Button>
-            <Button variant="outline" className="border-blue-300/50 text-blue-200 hover:bg-white/10">
+            <Button variant="outline" className={`${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-400 text-gray-700 hover:bg-gray-100'}`}>
               Export to CAD
             </Button>
           </div>
