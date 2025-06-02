@@ -11,15 +11,13 @@ interface ModelProps {
 
 const Model = ({ url }: ModelProps) => {
   const meshRef = useRef<THREE.Group>(null);
-  const [error, setError] = useState<string | null>(null);
 
   let gltf;
   try {
     gltf = useLoader(GLTFLoader, url);
   } catch (err) {
     console.error('Failed to load GLTF model:', err);
-    setError('Failed to load 3D model. Please try using a GLB file format.');
-    return null;
+    throw new Error('Failed to load 3D model. Please try using a GLB file format.');
   }
 
   useFrame((state) => {
@@ -27,15 +25,6 @@ const Model = ({ url }: ModelProps) => {
       meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime) * 0.1;
     }
   });
-
-  if (error) {
-    return (
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="red" />
-      </mesh>
-    );
-  }
 
   if (!gltf || !gltf.scene) {
     return null;
@@ -85,6 +74,34 @@ interface ModelViewerProps {
   modelUrl: string;
 }
 
+class ModelErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: React.ReactNode; onError: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback: React.ReactNode; onError: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    console.error('Model error boundary caught:', error);
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Model loading error:', error, errorInfo);
+    this.props.onError();
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
+}
+
 const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
   const [hasError, setHasError] = useState(false);
 
@@ -92,6 +109,11 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
     console.error('Model loading failed for URL:', modelUrl);
     setHasError(true);
   };
+
+  // Reset error state when model URL changes
+  React.useEffect(() => {
+    setHasError(false);
+  }, [modelUrl]);
 
   if (hasError) {
     return (
@@ -112,9 +134,9 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
         <pointLight position={[-10, -10, -10]} intensity={0.5} />
         
         <Suspense fallback={<LoadingSpinner />}>
-          <ErrorBoundary fallback={<ErrorModel />} onError={handleError}>
+          <ModelErrorBoundary fallback={<ErrorModel />} onError={handleError}>
             <Model url={modelUrl} />
-          </ErrorBoundary>
+          </ModelErrorBoundary>
         </Suspense>
         
         <OrbitControls 
@@ -128,21 +150,6 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
       </Canvas>
     </div>
   );
-};
-
-// Simple error boundary component
-const ErrorBoundary = ({ children, fallback, onError }: { 
-  children: React.ReactNode; 
-  fallback: React.ReactNode;
-  onError: () => void;
-}) => {
-  try {
-    return <>{children}</>;
-  } catch (error) {
-    console.error('Error boundary caught:', error);
-    onError();
-    return <>{fallback}</>;
-  }
 };
 
 export default ModelViewer;
