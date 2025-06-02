@@ -24,7 +24,9 @@ const Dashboard = () => {
 
   const callGeminiAPI = async (prompt: string): Promise<string> => {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+      console.log('Making Gemini API call with prompt:', prompt);
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,15 +36,31 @@ const Dashboard = () => {
             parts: [{
               text: prompt
             }]
-          }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+          }
         }),
       });
 
+      console.log('API Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to get response from Gemini API');
+        const errorData = await response.json();
+        console.error('API Error details:', errorData);
+        throw new Error(`API request failed: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('API Response data:', data);
+      
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        throw new Error('Invalid response format from API');
+      }
+
       return data.candidates[0].content.parts[0].text;
     } catch (error) {
       console.error('Gemini API error:', error);
@@ -167,11 +185,14 @@ Format your response as JSON with this structure:
 
   const themeClasses = isDarkTheme 
     ? 'bg-gray-900 text-white'
-    : 'bg-gray-50 text-gray-900';
+    : 'bg-white text-gray-900';
 
   const cardClasses = isDarkTheme
     ? 'bg-gray-800 border-gray-700'
-    : 'bg-white border-gray-200';
+    : 'bg-gray-50 border-gray-200';
+
+  const textClasses = isDarkTheme ? 'text-gray-300' : 'text-gray-700';
+  const mutedTextClasses = isDarkTheme ? 'text-gray-400' : 'text-gray-600';
 
   return (
     <div className={`min-h-screen transition-colors duration-300 p-6 ${themeClasses}`}>
@@ -182,7 +203,7 @@ Format your response as JSON with this structure:
             <h1 className="text-4xl font-bold mb-2">
               Automotive CFD Analysis Suite
             </h1>
-            <p className={`text-lg ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className={`text-lg ${textClasses}`}>
               Advanced aerodynamic optimization with integrated CATIA copilot
             </p>
           </div>
@@ -190,7 +211,7 @@ Format your response as JSON with this structure:
             onClick={() => setIsDarkTheme(!isDarkTheme)}
             variant="outline"
             size="lg"
-            className={`${isDarkTheme ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`}
+            className={`${isDarkTheme ? 'border-gray-600 hover:bg-gray-700 text-white' : 'border-gray-400 hover:bg-gray-100 text-gray-900'}`}
           >
             {isDarkTheme ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
             {isDarkTheme ? 'Light' : 'Dark'} Theme
@@ -205,7 +226,7 @@ Format your response as JSON with this structure:
                 <Upload className="h-6 w-6" />
                 Upload 3D Model
               </CardTitle>
-              <CardDescription className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}>
+              <CardDescription className={mutedTextClasses}>
                 Upload your car model for aerodynamic analysis. For best results, use GLB format (self-contained).
               </CardDescription>
             </CardHeader>
@@ -224,11 +245,11 @@ Format your response as JSON with this structure:
                   id="model-upload"
                 />
                 <label htmlFor="model-upload" className="cursor-pointer">
-                  <Upload className={`h-16 w-16 mx-auto mb-4 ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <Upload className={`h-16 w-16 mx-auto mb-4 ${mutedTextClasses}`} />
                   <p className="text-xl mb-2">Drop your 3D model here</p>
-                  <p className={`mb-2 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>Supports .GLB and .GLTF formats</p>
-                  <p className={`text-sm ${isDarkTheme ? 'text-gray-500' : 'text-gray-500'}`}>Recommended: Use GLB format for better compatibility</p>
-                  <Button className="mt-4 bg-gray-800 hover:bg-gray-700 text-white dark:bg-gray-200 dark:hover:bg-gray-300 dark:text-gray-900">
+                  <p className={`mb-2 ${mutedTextClasses}`}>Supports .GLB and .GLTF formats</p>
+                  <p className={`text-sm ${mutedTextClasses}`}>Recommended: Use GLB format for better compatibility</p>
+                  <Button className={`mt-4 ${isDarkTheme ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}>
                     Browse Files
                   </Button>
                 </label>
@@ -274,14 +295,14 @@ Format your response as JSON with this structure:
                       <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4 ${
                         isDarkTheme ? 'border-gray-400' : 'border-gray-600'
                       }`}></div>
-                      <p className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}>Analyzing aerodynamics with AI...</p>
+                      <p className={mutedTextClasses}>Analyzing aerodynamics with AI...</p>
                     </div>
                   ) : shouldShowResults ? (
                     <div className="text-center">
                       <div className="text-4xl font-bold mb-2">
                         {dragCoefficient}
                       </div>
-                      <p className={`mb-4 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>Coefficient of Drag (Cd)</p>
+                      <p className={`mb-4 ${mutedTextClasses}`}>Coefficient of Drag (Cd)</p>
                       <Badge 
                         variant={dragCoefficient < 0.35 ? "default" : "destructive"}
                         className="text-sm"
@@ -291,7 +312,7 @@ Format your response as JSON with this structure:
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <p className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}>Upload a model to begin analysis</p>
+                      <p className={mutedTextClasses}>Upload a model to begin analysis</p>
                     </div>
                   )}
                 </CardContent>
@@ -306,7 +327,7 @@ Format your response as JSON with this structure:
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open in CATIA V6
                   </Button>
-                  <p className={`text-sm mt-2 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <p className={`text-sm mt-2 ${mutedTextClasses}`}>
                     Export optimized geometry for detailed CAD modeling
                   </p>
                 </CardContent>
@@ -323,7 +344,7 @@ Format your response as JSON with this structure:
                 <AlertTriangle className="h-5 w-5" />
                 AI-Powered Aerodynamic Improvements
               </CardTitle>
-              <CardDescription className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}>
+              <CardDescription className={mutedTextClasses}>
                 Suggestions generated using advanced AI analysis
               </CardDescription>
             </CardHeader>
@@ -335,7 +356,7 @@ Format your response as JSON with this structure:
                     className={`p-4 rounded-lg border transition-colors ${
                       isDarkTheme 
                         ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
-                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                        : 'bg-white border-gray-300 hover:bg-gray-100'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -344,7 +365,7 @@ Format your response as JSON with this structure:
                         {improvement.impact}
                       </Badge>
                     </div>
-                    <p className={`text-sm mb-3 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>{improvement.description}</p>
+                    <p className={`text-sm mb-3 ${mutedTextClasses}`}>{improvement.description}</p>
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-400" />
                       <span className="text-green-400 text-sm font-medium">

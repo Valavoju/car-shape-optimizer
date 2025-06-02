@@ -81,7 +81,9 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
 
   const callGeminiAPI = async (prompt: string): Promise<string> => {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+      console.log('Making Gemini API call with prompt:', prompt);
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,21 +91,37 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are an expert CATIA assistant with deep knowledge of all CATIA workbenches, tools, and workflows. Provide comprehensive and practical advice like ChatGPT would. Question: ${prompt}`
+              text: `You are an expert CATIA assistant with deep knowledge of all CATIA workbenches, tools, and workflows. Provide comprehensive and practical advice like ChatGPT would. Be detailed, helpful, and specific in your responses. Question: ${prompt}`
             }]
-          }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+          }
         }),
       });
 
+      console.log('API Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to get response from Gemini API');
+        const errorData = await response.json();
+        console.error('API Error details:', errorData);
+        throw new Error(`API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
+      console.log('API Response data:', data);
+      
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        throw new Error('Invalid response format from API');
+      }
+
       return data.candidates[0].content.parts[0].text;
     } catch (error) {
       console.error('Gemini API error:', error);
-      return "I'm having trouble processing your request right now. However, I can still help you with CATIA questions based on my knowledge. Please try rephrasing your question or ask about specific CATIA tools and workflows.";
+      return "I apologize, but I'm having trouble connecting to the AI service right now. However, I can still help you with CATIA questions based on my knowledge. Could you please rephrase your question and I'll do my best to assist you with CATIA workbenches, tools, and workflows?";
     }
   };
 
@@ -172,19 +190,27 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
 
   const themeClasses = isDarkMode 
     ? 'bg-gray-900 text-white'
-    : 'bg-gray-50 text-gray-900';
+    : 'bg-white text-gray-900';
 
   const cardClasses = isDarkMode
     ? 'bg-gray-800 border-gray-700'
-    : 'bg-white border-gray-200';
+    : 'bg-gray-50 border-gray-200';
 
   const accentClasses = isDarkMode
     ? 'text-orange-300'
-    : 'text-orange-600';
+    : 'text-orange-700';
 
   const mutedClasses = isDarkMode
     ? 'text-gray-300'
-    : 'text-gray-600';
+    : 'text-gray-700';
+
+  const inputClasses = isDarkMode 
+    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500';
+
+  const buttonClasses = isDarkMode
+    ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+    : 'border-gray-400 text-gray-700 hover:bg-gray-100';
 
   return (
     <div className={`space-y-6 ${themeClasses}`}>
@@ -206,7 +232,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
                 className={`p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer ${
                   isDarkMode 
                     ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
-                    : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    : 'bg-white border-gray-300 hover:bg-gray-100'
                 }`}
                 onClick={() => handleToolSelection(tool)}
               >
@@ -295,11 +321,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
               placeholder="Ask about CATIA tools, workflows, or best practices..."
-              className={`flex-1 p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
+              className={`flex-1 p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-500 ${inputClasses}`}
               disabled={isLoading}
             />
             <input
@@ -331,11 +353,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
               variant="outline"
               size="sm"
               onClick={() => setInputMessage("What are the advanced features of Part Design workbench?")}
-              className={`${
-                isDarkMode 
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
-              }`}
+              className={buttonClasses}
               disabled={isLoading}
             >
               Advanced Part Design
@@ -344,11 +362,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
               variant="outline"
               size="sm"
               onClick={() => setInputMessage("How do I optimize assembly performance in CATIA?")}
-              className={`${
-                isDarkMode 
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
-              }`}
+              className={buttonClasses}
               disabled={isLoading}
             >
               Assembly Optimization
@@ -357,11 +371,7 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
               variant="outline"
               size="sm"
               onClick={() => setInputMessage("Best practices for surface modeling workflow")}
-              className={`${
-                isDarkMode 
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
-              }`}
+              className={buttonClasses}
               disabled={isLoading}
             >
               Surface Modeling
