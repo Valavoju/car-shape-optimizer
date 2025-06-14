@@ -186,7 +186,7 @@ Format your response as JSON with this structure:
     ? 'bg-gray-900 text-gray-100'
     : 'bg-white text-gray-900';
 
-  const cardClasses = isDarkMode
+  const cardClasses = isDarkTheme
     ? 'bg-gray-800 border-gray-700 text-gray-100'
     : 'bg-gray-50 border-gray-200 text-gray-900';
 
