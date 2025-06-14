@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,7 +67,6 @@ const Dashboard = () => {
     }
   };
 
-  // Debug logging for state changes
   useEffect(() => {
     console.log('State update:', {
       uploadedModel: !!uploadedModel,
@@ -192,7 +190,7 @@ Format your response as JSON with this structure:
     : 'bg-gray-50 border-gray-200 text-gray-900';
 
   const textClasses = isDarkTheme ? 'text-gray-100' : 'text-gray-900';
-  const mutedTextClasses = isDarkTheme ? 'text-gray-300' : 'text-gray-700';
+  const mutedTextClasses = isDarkTheme ? 'text-gray-300' : 'text-gray-600';
 
   return (
     <div className={`min-h-screen transition-colors duration-300 p-6 ${themeClasses}`}>
@@ -217,7 +215,7 @@ Format your response as JSON with this structure:
             }`}
           >
             {isDarkTheme ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
-            <span className={isDarkTheme ? 'text-gray-100' : 'text-gray-900'}>
+            <span className={`${isDarkTheme ? 'text-gray-100' : 'text-gray-900'} font-medium`}>
               {isDarkTheme ? 'Light' : 'Dark'} Theme
             </span>
           </Button>
@@ -310,7 +308,11 @@ Format your response as JSON with this structure:
                       <p className={`mb-4 ${mutedTextClasses}`}>Coefficient of Drag (Cd)</p>
                       <Badge 
                         variant={dragCoefficient < 0.35 ? "default" : "destructive"}
-                        className="text-sm"
+                        className={`text-sm ${
+                          dragCoefficient < 0.35 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-red-600 text-white'
+                        }`}
                       >
                         {dragCoefficient < 0.35 ? "Excellent" : "Needs Improvement"}
                       </Badge>
@@ -387,28 +389,48 @@ Format your response as JSON with this structure:
         {/* Analysis Tabs */}
         {uploadedModel && (
           <Tabs defaultValue="catia" className="w-full">
-            <TabsList className={`grid w-full grid-cols-4 ${cardClasses}`}>
+            <TabsList className={`grid w-full grid-cols-4 ${
+              isDarkTheme 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-gray-100 border-gray-300'
+            }`}>
               <TabsTrigger 
                 value="catia" 
-                className={`data-[state=active]:bg-orange-600 data-[state=active]:text-white ${textClasses}`}
+                className={`${
+                  isDarkTheme 
+                    ? 'text-gray-100 data-[state=active]:bg-orange-600 data-[state=active]:text-white hover:bg-gray-700' 
+                    : 'text-gray-900 data-[state=active]:bg-orange-600 data-[state=active]:text-white hover:bg-gray-200'
+                }`}
               >
                 CATIA Copilot
               </TabsTrigger>
               <TabsTrigger 
                 value="ergonomics" 
-                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${textClasses}`}
+                className={`${
+                  isDarkTheme 
+                    ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
+                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-200'
+                }`}
               >
                 Ergonomics
               </TabsTrigger>
               <TabsTrigger 
                 value="nvh" 
-                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${textClasses}`}
+                className={`${
+                  isDarkTheme 
+                    ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
+                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-200'
+                }`}
               >
                 NVH Analysis
               </TabsTrigger>
               <TabsTrigger 
                 value="materials" 
-                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${textClasses}`}
+                className={`${
+                  isDarkTheme 
+                    ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
+                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-200'
+                }`}
               >
                 Material Optimizer
               </TabsTrigger>
