@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -183,11 +184,11 @@ Format your response as JSON with this structure:
 
   const themeClasses = isDarkTheme 
     ? 'bg-gray-900 text-gray-100'
-    : 'bg-white text-gray-900';
+    : 'bg-gray-50 text-gray-900';
 
   const cardClasses = isDarkTheme
     ? 'bg-gray-800 border-gray-700 text-gray-100'
-    : 'bg-gray-50 border-gray-200 text-gray-900';
+    : 'bg-white border-gray-200 text-gray-900';
 
   const textClasses = isDarkTheme ? 'text-gray-100' : 'text-gray-900';
   const mutedTextClasses = isDarkTheme ? 'text-gray-300' : 'text-gray-600';
@@ -210,8 +211,8 @@ Format your response as JSON with this structure:
             variant="outline"
             size="lg"
             className={`${isDarkTheme 
-              ? 'border-gray-600 hover:bg-gray-700 text-gray-100 bg-transparent' 
-              : 'border-gray-400 hover:bg-gray-100 text-gray-900 bg-transparent'
+              ? 'border-gray-600 hover:bg-gray-700 text-gray-100 bg-gray-800' 
+              : 'border-gray-400 hover:bg-gray-100 text-gray-900 bg-gray-50'
             }`}
           >
             {isDarkTheme ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
@@ -236,8 +237,8 @@ Format your response as JSON with this structure:
             <CardContent>
               <div className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
                 isDarkTheme 
-                  ? 'border-gray-600 hover:border-gray-500' 
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-gray-600 hover:border-gray-500 bg-gray-700' 
+                  : 'border-gray-300 hover:border-gray-400 bg-gray-100'
               }`}>
                 <input
                   ref={fileInputRef}
@@ -252,7 +253,7 @@ Format your response as JSON with this structure:
                   <p className={`text-xl mb-2 ${textClasses}`}>Drop your 3D model here</p>
                   <p className={`mb-2 ${mutedTextClasses}`}>Supports .GLB and .GLTF formats</p>
                   <p className={`text-sm ${mutedTextClasses}`}>Recommended: Use GLB format for better compatibility</p>
-                  <Button className={`mt-4 ${isDarkTheme ? 'bg-gray-700 hover:bg-gray-600 text-gray-100' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}>
+                  <Button className={`mt-4 ${isDarkTheme ? 'bg-gray-600 hover:bg-gray-500 text-gray-100' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}>
                     Browse Files
                   </Button>
                 </label>
@@ -363,7 +364,7 @@ Format your response as JSON with this structure:
                     className={`p-4 rounded-lg border transition-colors ${
                       isDarkTheme 
                         ? 'bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-100' 
-                        : 'bg-white border-gray-300 hover:bg-gray-100 text-gray-900'
+                        : 'bg-gray-50 border-gray-300 hover:bg-gray-100 text-gray-900'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -392,14 +393,14 @@ Format your response as JSON with this structure:
             <TabsList className={`grid w-full grid-cols-4 ${
               isDarkTheme 
                 ? 'bg-gray-800 border-gray-700' 
-                : 'bg-gray-100 border-gray-300'
+                : 'bg-gray-200 border-gray-300'
             }`}>
               <TabsTrigger 
                 value="catia" 
                 className={`${
                   isDarkTheme 
                     ? 'text-gray-100 data-[state=active]:bg-orange-600 data-[state=active]:text-white hover:bg-gray-700' 
-                    : 'text-gray-900 data-[state=active]:bg-orange-600 data-[state=active]:text-white hover:bg-gray-200'
+                    : 'text-gray-900 data-[state=active]:bg-orange-600 data-[state=active]:text-white hover:bg-gray-100'
                 }`}
               >
                 CATIA Copilot
@@ -409,7 +410,7 @@ Format your response as JSON with this structure:
                 className={`${
                   isDarkTheme 
                     ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
-                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-200'
+                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-100'
                 }`}
               >
                 Ergonomics
@@ -419,7 +420,7 @@ Format your response as JSON with this structure:
                 className={`${
                   isDarkTheme 
                     ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
-                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-200'
+                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-100'
                 }`}
               >
                 NVH Analysis
@@ -429,7 +430,7 @@ Format your response as JSON with this structure:
                 className={`${
                   isDarkTheme 
                     ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
-                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-200'
+                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-100'
                 }`}
               >
                 Material Optimizer
