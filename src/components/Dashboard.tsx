@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -211,8 +212,8 @@ Format your response as JSON with this structure:
             variant="outline"
             size="lg"
             className={`${isDarkTheme 
-              ? 'border-gray-600 hover:bg-gray-700 text-gray-100' 
-              : 'border-gray-400 hover:bg-gray-100 text-gray-900 bg-white'
+              ? 'border-gray-600 hover:bg-gray-700 text-gray-100 bg-transparent' 
+              : 'border-gray-400 hover:bg-gray-100 text-gray-900 bg-transparent'
             }`}
           >
             {isDarkTheme ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
