@@ -186,12 +186,12 @@ Format your response as JSON with this structure:
     ? 'bg-gray-900 text-gray-100'
     : 'bg-white text-gray-900';
 
-  const cardClasses = isDarkTheme
+  const cardClasses = isDarkMode
     ? 'bg-gray-800 border-gray-700 text-gray-100'
     : 'bg-gray-50 border-gray-200 text-gray-900';
 
-  const textClasses = isDarkTheme ? 'text-gray-300' : 'text-gray-700';
-  const mutedTextClasses = isDarkTheme ? 'text-gray-400' : 'text-gray-600';
+  const textClasses = isDarkTheme ? 'text-gray-100' : 'text-gray-900';
+  const mutedTextClasses = isDarkTheme ? 'text-gray-300' : 'text-gray-700';
 
   return (
     <div className={`min-h-screen transition-colors duration-300 p-6 ${themeClasses}`}>
@@ -199,10 +199,10 @@ Format your response as JSON with this structure:
         {/* Header with Theme Toggle */}
         <div className="mb-8 flex justify-between items-start">
           <div>
-            <h1 className={`text-4xl font-bold mb-2 ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>
+            <h1 className={`text-4xl font-bold mb-2 ${textClasses}`}>
               Automotive CFD Analysis Suite
             </h1>
-            <p className={`text-lg ${textClasses}`}>
+            <p className={`text-lg ${mutedTextClasses}`}>
               Advanced aerodynamic optimization with integrated CATIA copilot
             </p>
           </div>
@@ -210,7 +210,10 @@ Format your response as JSON with this structure:
             onClick={() => setIsDarkTheme(!isDarkTheme)}
             variant="outline"
             size="lg"
-            className={`${isDarkTheme ? 'border-gray-600 hover:bg-gray-700 text-gray-100' : 'border-gray-400 hover:bg-gray-100 text-gray-900'}`}
+            className={`${isDarkTheme 
+              ? 'border-gray-600 hover:bg-gray-700 text-gray-100' 
+              : 'border-gray-400 hover:bg-gray-100 text-gray-900 bg-white'
+            }`}
           >
             {isDarkTheme ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
             <span className={isDarkTheme ? 'text-gray-100' : 'text-gray-900'}>
@@ -223,7 +226,7 @@ Format your response as JSON with this structure:
         {!uploadedModel && (
           <Card className={`mb-8 ${cardClasses} backdrop-blur-sm`}>
             <CardHeader>
-              <CardTitle className={`flex items-center gap-2 ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>
+              <CardTitle className={`flex items-center gap-2 ${textClasses}`}>
                 <Upload className="h-6 w-6" />
                 Upload 3D Model
               </CardTitle>
@@ -247,7 +250,7 @@ Format your response as JSON with this structure:
                 />
                 <label htmlFor="model-upload" className="cursor-pointer">
                   <Upload className={`h-16 w-16 mx-auto mb-4 ${mutedTextClasses}`} />
-                  <p className={`text-xl mb-2 ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>Drop your 3D model here</p>
+                  <p className={`text-xl mb-2 ${textClasses}`}>Drop your 3D model here</p>
                   <p className={`mb-2 ${mutedTextClasses}`}>Supports .GLB and .GLTF formats</p>
                   <p className={`text-sm ${mutedTextClasses}`}>Recommended: Use GLB format for better compatibility</p>
                   <Button className={`mt-4 ${isDarkTheme ? 'bg-gray-700 hover:bg-gray-600 text-gray-100' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}>
@@ -273,7 +276,7 @@ Format your response as JSON with this structure:
             <div className="lg:col-span-2">
               <Card className={`${cardClasses} h-96`}>
                 <CardHeader>
-                  <CardTitle className={isDarkTheme ? 'text-gray-100' : 'text-gray-900'}>3D Model Viewer</CardTitle>
+                  <CardTitle className={textClasses}>3D Model Viewer</CardTitle>
                 </CardHeader>
                 <CardContent className="h-80">
                   <ModelViewer modelUrl={uploadedModel} />
@@ -285,7 +288,7 @@ Format your response as JSON with this structure:
             <div className="space-y-4">
               <Card className={cardClasses}>
                 <CardHeader>
-                  <CardTitle className={`flex items-center gap-2 ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <CardTitle className={`flex items-center gap-2 ${textClasses}`}>
                     <Zap className="h-5 w-5" />
                     Drag Analysis
                   </CardTitle>
@@ -300,7 +303,7 @@ Format your response as JSON with this structure:
                     </div>
                   ) : shouldShowResults ? (
                     <div className="text-center">
-                      <div className={`text-4xl font-bold mb-2 ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>
+                      <div className={`text-4xl font-bold mb-2 ${textClasses}`}>
                         {dragCoefficient}
                       </div>
                       <p className={`mb-4 ${mutedTextClasses}`}>Coefficient of Drag (Cd)</p>
@@ -321,7 +324,7 @@ Format your response as JSON with this structure:
 
               <Card className={cardClasses}>
                 <CardHeader>
-                  <CardTitle className={isDarkTheme ? 'text-gray-100' : 'text-gray-900'}>CATIA Integration</CardTitle>
+                  <CardTitle className={textClasses}>CATIA Integration</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
@@ -341,7 +344,7 @@ Format your response as JSON with this structure:
         {shouldShowImprovements && (
           <Card className={`mb-8 ${cardClasses}`}>
             <CardHeader>
-              <CardTitle className={`flex items-center gap-2 ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>
+              <CardTitle className={`flex items-center gap-2 ${textClasses}`}>
                 <AlertTriangle className="h-5 w-5" />
                 AI-Powered Aerodynamic Improvements
               </CardTitle>
@@ -361,7 +364,7 @@ Format your response as JSON with this structure:
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className={`font-semibold ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>{improvement.area}</h4>
+                      <h4 className={`font-semibold ${textClasses}`}>{improvement.area}</h4>
                       <Badge className={`${getImpactColor(improvement.impact)} text-white`}>
                         {improvement.impact}
                       </Badge>
@@ -386,25 +389,25 @@ Format your response as JSON with this structure:
             <TabsList className={`grid w-full grid-cols-4 ${cardClasses}`}>
               <TabsTrigger 
                 value="catia" 
-                className={`data-[state=active]:bg-orange-600 data-[state=active]:text-white ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}
+                className={`data-[state=active]:bg-orange-600 data-[state=active]:text-white ${textClasses}`}
               >
                 CATIA Copilot
               </TabsTrigger>
               <TabsTrigger 
                 value="ergonomics" 
-                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}
+                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${textClasses}`}
               >
                 Ergonomics
               </TabsTrigger>
               <TabsTrigger 
                 value="nvh" 
-                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}
+                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${textClasses}`}
               >
                 NVH Analysis
               </TabsTrigger>
               <TabsTrigger 
                 value="materials" 
-                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}
+                className={`data-[state=active]:bg-gray-600 data-[state=active]:text-white ${textClasses}`}
               >
                 Material Optimizer
               </TabsTrigger>
@@ -419,11 +422,11 @@ Format your response as JSON with this structure:
             </TabsContent>
             
             <TabsContent value="nvh">
-              <NvhTab />
+              <NvhTab isDarkMode={isDarkTheme} />
             </TabsContent>
             
             <TabsContent value="materials">
-              <MaterialOptimizerTab />
+              <MaterialOptimizerTab isDarkMode={isDarkTheme} />
             </TabsContent>
           </Tabs>
         )}
