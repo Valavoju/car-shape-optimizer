@@ -20,6 +20,10 @@ const Dashboard = () => {
   const [improvements, setImprovements] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkTheme);
+  }, [isDarkTheme]);
+
   const GEMINI_API_KEY = "AIzaSyB1IsMsk-0_Q-eu1ZTP8ORYsgeslzdrSrw";
 
   const callGeminiAPI = async (prompt: string): Promise<string> => {
@@ -172,26 +176,22 @@ Format your response as JSON with this structure:
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'High': return 'bg-red-500';
-      case 'Medium': return 'bg-yellow-500';
-      case 'Low': return 'bg-green-500';
-      default: return 'bg-gray-500';
+      case 'High': return 'bg-destructive text-destructive-foreground';
+      case 'Medium': return 'bg-primary text-primary-foreground';
+      case 'Low': return 'bg-accent text-accent-foreground';
+      default: return 'bg-muted text-foreground';
     }
   };
 
   const shouldShowResults = uploadedModel && !isAnalyzing && analysisComplete && dragCoefficient !== null;
   const shouldShowImprovements = shouldShowResults && improvements.length > 0;
 
-  const themeClasses = isDarkTheme 
-    ? 'bg-gray-900 text-gray-100'
-    : 'bg-gray-50 text-gray-900';
+  const themeClasses = 'bg-background text-foreground';
 
-  const cardClasses = isDarkTheme
-    ? 'bg-gray-800 border-gray-700 text-gray-100'
-    : 'bg-white border-gray-200 text-gray-900';
+  const cardClasses = 'bg-card border border-border text-foreground';
 
-  const textClasses = isDarkTheme ? 'text-gray-100' : 'text-gray-900';
-  const mutedTextClasses = isDarkTheme ? 'text-gray-300' : 'text-gray-600';
+  const textClasses = 'text-foreground';
+  const mutedTextClasses = 'text-muted-foreground';
 
   return (
     <div className={`min-h-screen transition-colors duration-300 p-6 ${themeClasses}`}>
@@ -210,10 +210,7 @@ Format your response as JSON with this structure:
             onClick={() => setIsDarkTheme(!isDarkTheme)}
             variant="outline"
             size="lg"
-            className={`${isDarkTheme 
-              ? 'border-gray-600 hover:bg-gray-700 text-gray-100 bg-gray-800' 
-              : 'border-gray-400 hover:bg-gray-100 text-gray-900 bg-gray-50'
-            }`}
+            className="border-border bg-card text-foreground hover:bg-muted"
           >
             {isDarkTheme ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
             <span className={`${isDarkTheme ? 'text-gray-100' : 'text-gray-900'} font-medium`}>
@@ -253,7 +250,7 @@ Format your response as JSON with this structure:
                   <p className={`text-xl mb-2 ${textClasses}`}>Drop your 3D model here</p>
                   <p className={`mb-2 ${mutedTextClasses}`}>Supports .GLB and .GLTF formats</p>
                   <p className={`text-sm ${mutedTextClasses}`}>Recommended: Use GLB format for better compatibility</p>
-                  <Button className={`mt-4 ${isDarkTheme ? 'bg-gray-600 hover:bg-gray-500 text-gray-100' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}>
+                  <Button variant="secondary" className="mt-4">
                     Browse Files
                   </Button>
                 </label>
@@ -296,9 +293,7 @@ Format your response as JSON with this structure:
                 <CardContent>
                   {isAnalyzing ? (
                     <div className="text-center py-8">
-                      <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4 ${
-                        isDarkTheme ? 'border-gray-400' : 'border-gray-600'
-                      }`}></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4 border-primary"></div>
                       <p className={mutedTextClasses}>Analyzing aerodynamics with AI...</p>
                     </div>
                   ) : shouldShowResults ? (
@@ -308,12 +303,7 @@ Format your response as JSON with this structure:
                       </div>
                       <p className={`mb-4 ${mutedTextClasses}`}>Coefficient of Drag (Cd)</p>
                       <Badge 
-                        variant={dragCoefficient < 0.35 ? "default" : "destructive"}
-                        className={`text-sm ${
-                          dragCoefficient < 0.35 
-                            ? 'bg-green-600 text-white' 
-                            : 'bg-red-600 text-white'
-                        }`}
+                        className={`text-sm ${dragCoefficient < 0.35 ? 'bg-primary text-primary-foreground' : 'bg-destructive text-destructive-foreground'}`}
                       >
                         {dragCoefficient < 0.35 ? "Excellent" : "Needs Improvement"}
                       </Badge>
@@ -331,7 +321,7 @@ Format your response as JSON with this structure:
                   <CardTitle className={textClasses}>CATIA Integration</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                  <Button className="w-full">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open in CATIA V6
                   </Button>
@@ -361,15 +351,11 @@ Format your response as JSON with this structure:
                 {improvements.map((improvement, index) => (
                   <div 
                     key={index}
-                    className={`p-4 rounded-lg border transition-colors ${
-                      isDarkTheme 
-                        ? 'bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-100' 
-                        : 'bg-gray-50 border-gray-300 hover:bg-gray-100 text-gray-900'
-                    }`}
+                    className="p-4 rounded-lg border transition-colors bg-muted hover:bg-muted/80 border-border text-foreground"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <h4 className={`font-semibold ${textClasses}`}>{improvement.area}</h4>
-                      <Badge className={`${getImpactColor(improvement.impact)} text-white`}>
+                      <Badge className={`${getImpactColor(improvement.impact)}`}>
                         {improvement.impact}
                       </Badge>
                     </div>
@@ -390,48 +376,28 @@ Format your response as JSON with this structure:
         {/* Analysis Tabs */}
         {uploadedModel && (
           <Tabs defaultValue="catia" className="w-full">
-            <TabsList className={`grid w-full grid-cols-4 ${
-              isDarkTheme 
-                ? 'bg-gray-800 border-gray-700' 
-                : 'bg-gray-200 border-gray-300'
-            }`}>
+            <TabsList className="grid w-full grid-cols-4 bg-muted border border-border">
               <TabsTrigger 
                 value="catia" 
-                className={`${
-                  isDarkTheme 
-                    ? 'text-gray-100 data-[state=active]:bg-orange-600 data-[state=active]:text-white hover:bg-gray-700' 
-                    : 'text-gray-900 data-[state=active]:bg-orange-600 data-[state=active]:text-white hover:bg-gray-100'
-                }`}
+                className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
               >
                 CATIA Copilot
               </TabsTrigger>
               <TabsTrigger 
                 value="ergonomics" 
-                className={`${
-                  isDarkTheme 
-                    ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
-                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-100'
-                }`}
+                className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
               >
                 Ergonomics
               </TabsTrigger>
               <TabsTrigger 
                 value="nvh" 
-                className={`${
-                  isDarkTheme 
-                    ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
-                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-100'
-                }`}
+                className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
               >
                 NVH Analysis
               </TabsTrigger>
               <TabsTrigger 
                 value="materials" 
-                className={`${
-                  isDarkTheme 
-                    ? 'text-gray-100 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-700' 
-                    : 'text-gray-900 data-[state=active]:bg-gray-600 data-[state=active]:text-white hover:bg-gray-100'
-                }`}
+                className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
               >
                 Material Optimizer
               </TabsTrigger>
