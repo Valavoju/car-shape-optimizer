@@ -76,51 +76,35 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const GEMINI_API_KEY = "AIzaSyB1IsMsk-0_Q-eu1ZTP8ORYsgeslzdrSrw";
-
-  const callGeminiAPI = async (prompt: string): Promise<string> => {
+  const callGeminiAPI = async (prompt: string, imageBase64?: string): Promise<string> => {
     try {
-      console.log('Making Gemini API call with prompt:', prompt);
+      console.log('Calling CATIA chat function:', { hasImage: !!imageBase64 });
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are an expert CATIA assistant with deep knowledge of all CATIA workbenches, tools, and workflows. Provide comprehensive and practical advice like ChatGPT would. Be detailed, helpful, and specific in your responses. Question: ${prompt}`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          }
-        }),
-      });
-
-      console.log('API Response status:', response.status);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/catia-chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            prompt: `You are an expert CATIA assistant with deep knowledge of all CATIA workbenches, tools, and workflows. Provide comprehensive and practical advice like ChatGPT would. Be detailed, helpful, and specific in your responses. Question: ${prompt}`,
+            imageBase64 
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API Error details:', errorData);
-        throw new Error(`API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(errorData.error || 'Failed to get response');
       }
 
       const data = await response.json();
-      console.log('API Response data:', data);
-      
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-        throw new Error('Invalid response format from API');
-      }
-
-      return data.candidates[0].content.parts[0].text;
+      return data.response;
     } catch (error) {
-      console.error('Gemini API error:', error);
-      return "I apologize, but I'm having trouble connecting to the AI service right now. However, I can still help you with CATIA questions based on my knowledge. Could you please rephrase your question and I'll do my best to assist you with CATIA workbenches, tools, and workflows?";
+      console.error('Error calling CATIA chat:', error);
+      return "I apologize, but I encountered an error while processing your request. Please try again.";
     }
   };
 
@@ -153,32 +137,39 @@ const CatiaCopilot = ({ isDarkMode = true }: CatiaCopilotProps) => {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file);
+    if (!file || !file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      const base64Data = base64String.split(',')[1];
+      
       const userMessage: CatiaMessage = {
         id: Date.now().toString(),
         type: 'user',
-        content: "I've uploaded an image for analysis. Can you help me identify potential improvements or CATIA tools that could be useful?",
-        image: url,
+        content: 'Uploaded image for analysis',
+        image: base64String,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, userMessage]);
       setIsLoading(true);
 
-      const analysisPrompt = "Analyze this engineering/design image and suggest relevant CATIA tools and workflows that could be used to create or improve this design. Focus on specific CATIA workbenches and features.";
-      const aiResponse = await callGeminiAPI(analysisPrompt);
-      
+      const prompt = `Analyze this image and provide detailed insights about the CATIA design, model, workflow, or any technical aspects visible. Be specific and technical in your analysis.`;
+      const response = await callGeminiAPI(prompt, base64Data);
+
       const assistantMessage: CatiaMessage = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: aiResponse,
+        content: response,
         timestamp: new Date()
       };
-      
+
       setMessages(prev => [...prev, assistantMessage]);
       setIsLoading(false);
-    }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleToolSelection = (tool: CatiaTool) => {
