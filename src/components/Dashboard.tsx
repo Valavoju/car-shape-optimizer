@@ -13,6 +13,7 @@ import CatiaCopilot from './CatiaCopilot';
 
 const Dashboard = () => {
   const [uploadedModel, setUploadedModel] = useState<string | null>(null);
+  const [uploadedFileType, setUploadedFileType] = useState<string | null>(null);
   const [dragCoefficient, setDragCoefficient] = useState<number | null>(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -83,7 +84,9 @@ const Dashboard = () => {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf') || file.name.endsWith('.obj'))) {
+    if (file) {
+      const nameLower = file.name.toLowerCase();
+      if (nameLower.endsWith('.glb') || nameLower.endsWith('.gltf') || nameLower.endsWith('.obj')) {
       if (isAnalyzing) return;
       
       const url = URL.createObjectURL(file);
@@ -94,6 +97,7 @@ const Dashboard = () => {
       });
       
       setUploadedModel(url);
+      setUploadedFileType(file.name.split('.').pop()?.toLowerCase() || null);
       setIsAnalyzing(true);
       setAnalysisComplete(false);
       setDragCoefficient(null);
@@ -167,6 +171,7 @@ Format your response as JSON with this structure:
         console.error('Analysis error:', error);
         setIsAnalyzing(false);
       }
+    }
     }
     
     if (fileInputRef.current) {
@@ -278,7 +283,7 @@ Format your response as JSON with this structure:
                   <CardTitle className={textClasses}>3D Model Viewer</CardTitle>
                 </CardHeader>
                 <CardContent className="h-80">
-                  <ModelViewer modelUrl={uploadedModel} />
+                  <ModelViewer modelUrl={uploadedModel} fileType={uploadedFileType || undefined} />
                 </CardContent>
               </Card>
             </div>
