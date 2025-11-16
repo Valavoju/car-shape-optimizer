@@ -83,7 +83,7 @@ const Dashboard = () => {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf') || file.name.endsWith('.obj') || file.name.endsWith('.blend'))) {
+    if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf') || file.name.endsWith('.obj'))) {
       if (isAnalyzing) return;
       
       const url = URL.createObjectURL(file);
@@ -228,7 +228,8 @@ Format your response as JSON with this structure:
                 Upload 3D Model
               </CardTitle>
               <CardDescription className={mutedTextClasses}>
-                Upload your car model for aerodynamic analysis. Supports GLB, GLTF, OBJ, and BLEND formats.
+                Upload your car model for aerodynamic analysis. Supports GLB, GLTF, and OBJ formats. 
+                <span className="block text-yellow-500 text-xs mt-1">Note: BLEND files must be exported to GLB/OBJ first</span>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -240,7 +241,7 @@ Format your response as JSON with this structure:
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".glb,.gltf,.obj,.blend"
+                  accept=".glb,.gltf,.obj"
                   onChange={handleFileUpload}
                   className="hidden"
                   id="model-upload"
@@ -248,8 +249,9 @@ Format your response as JSON with this structure:
                 <label htmlFor="model-upload" className="cursor-pointer">
                   <Upload className={`h-16 w-16 mx-auto mb-4 ${mutedTextClasses}`} />
                   <p className={`text-xl mb-2 ${textClasses}`}>Drop your 3D model here</p>
-                  <p className={`mb-2 ${mutedTextClasses}`}>Supports .GLB, .GLTF, .OBJ, and .BLEND formats</p>
+                  <p className={`mb-2 ${mutedTextClasses}`}>Supports GLB, GLTF, and OBJ formats</p>
                   <p className={`text-sm ${mutedTextClasses}`}>Recommended: Use GLB format for better compatibility</p>
+                  <p className={`text-xs text-yellow-500 mt-2`}>BLEND files: Export as GLB/OBJ from Blender</p>
                   <Button variant="secondary" className="mt-4">
                     Browse Files
                   </Button>

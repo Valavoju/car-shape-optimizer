@@ -1,23 +1,32 @@
-
 import React, { Suspense, useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
+import { OrbitControls, Environment, useGLTF } from '@react-three/drei';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as THREE from 'three';
 
 interface ModelProps {
   url: string;
+  fileType: string;
 }
 
-const Model = ({ url }: ModelProps) => {
+const Model = ({ url, fileType }: ModelProps) => {
   const meshRef = useRef<THREE.Group>(null);
+  let modelObject: THREE.Group | THREE.Object3D | null = null;
 
-  let gltf;
   try {
-    gltf = useLoader(GLTFLoader, url);
+    if (fileType === 'obj') {
+      // Load OBJ file
+      const obj = useLoader(OBJLoader, url);
+      modelObject = obj;
+    } else {
+      // Load GLB/GLTF file
+      const gltf = useLoader(GLTFLoader, url);
+      modelObject = gltf.scene;
+    }
   } catch (err) {
-    console.error('Failed to load GLTF model:', err);
-    throw new Error('Failed to load 3D model. Please try using a GLB file format.');
+    console.error(`Failed to load ${fileType.toUpperCase()} model:`, err);
+    throw new Error(`Failed to load 3D model. Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 
   useFrame((state) => {
@@ -26,12 +35,27 @@ const Model = ({ url }: ModelProps) => {
     }
   });
 
-  if (!gltf || !gltf.scene) {
+  if (!modelObject) {
     return null;
   }
 
   // Clone the scene to avoid issues with multiple instances
-  const clonedScene = gltf.scene.clone();
+  const clonedScene = modelObject.clone();
+  
+  // Add default material to OBJ files if they don't have one
+  if (fileType === 'obj') {
+    clonedScene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+          child.material = new THREE.MeshStandardMaterial({ 
+            color: 0xcccccc,
+            metalness: 0.3,
+            roughness: 0.7
+          });
+        }
+      }
+    });
+  }
   
   // Scale and center the model
   const box = new THREE.Box3().setFromObject(clonedScene);
@@ -104,6 +128,7 @@ class ModelErrorBoundary extends React.Component<
 
 const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleError = () => {
     console.error('Model loading failed for URL:', modelUrl);
@@ -113,14 +138,36 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
   // Reset error state when model URL changes
   useEffect(() => {
     setHasError(false);
+    setErrorMessage('');
   }, [modelUrl]);
 
-  if (hasError) {
+  // Detect file type from URL
+  const getFileType = (url: string): string => {
+    const extension = url.toLowerCase().split('.').pop() || '';
+    if (extension === 'blend') {
+      setHasError(true);
+      setErrorMessage('BLEND files cannot be loaded directly. Please export from Blender as GLB, GLTF, or OBJ format.');
+      return 'unsupported';
+    }
+    return extension;
+  };
+
+  const fileType = getFileType(modelUrl);
+
+  if (hasError || fileType === 'unsupported') {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-900 rounded-lg">
-        <div className="text-center">
-          <p className="text-red-400 mb-2">Model Loading Error</p>
-          <p className="text-gray-400 text-sm">Please try uploading a GLB file</p>
+        <div className="text-center p-6">
+          <p className="text-red-400 mb-2 font-semibold">Model Loading Error</p>
+          <p className="text-gray-400 text-sm mb-3">
+            {errorMessage || 'Failed to load the 3D model'}
+          </p>
+          <p className="text-gray-500 text-xs">
+            Supported formats: GLB, GLTF, OBJ
+          </p>
+          <p className="text-yellow-400 text-xs mt-2">
+            Note: BLEND files must be exported to GLB/OBJ format first
+          </p>
         </div>
       </div>
     );
@@ -135,7 +182,7 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
         
         <Suspense fallback={<LoadingSpinner />}>
           <ModelErrorBoundary fallback={<ErrorModel />} onError={handleError}>
-            <Model url={modelUrl} />
+            <Model url={modelUrl} fileType={fileType} />
           </ModelErrorBoundary>
         </Suspense>
         
