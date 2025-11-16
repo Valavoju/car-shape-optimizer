@@ -1,6 +1,6 @@
 import React, { Suspense, useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { OrbitControls, Environment, useGLTF } from '@react-three/drei';
+import { OrbitControls, Environment } from '@react-three/drei';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as THREE from 'three';
@@ -96,6 +96,7 @@ const ErrorModel = () => (
 
 interface ModelViewerProps {
   modelUrl: string;
+  fileType?: string;
 }
 
 class ModelErrorBoundary extends React.Component<
@@ -126,7 +127,7 @@ class ModelErrorBoundary extends React.Component<
   }
 }
 
-const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
+const ModelViewer = ({ modelUrl, fileType: propFileType }: ModelViewerProps) => {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -139,20 +140,23 @@ const ModelViewer = ({ modelUrl }: ModelViewerProps) => {
   useEffect(() => {
     setHasError(false);
     setErrorMessage('');
-  }, [modelUrl]);
+  }, [modelUrl, propFileType]);
 
-  // Detect file type from URL
-  const getFileType = (url: string): string => {
-    const extension = url.toLowerCase().split('.').pop() || '';
-    if (extension === 'blend') {
+  // Resolve file type: prefer prop, else try to infer from URL (works for http(s) but not blob URLs)
+  const resolveFileType = (url: string, ft?: string): string => {
+    const ext = ft?.toLowerCase?.();
+    if (ext) return ext;
+    const parts = url.toLowerCase().split('.');
+    const maybe = parts.length > 1 ? parts.pop()! : '';
+    if (maybe === 'blend') {
       setHasError(true);
       setErrorMessage('BLEND files cannot be loaded directly. Please export from Blender as GLB, GLTF, or OBJ format.');
       return 'unsupported';
     }
-    return extension;
+    return maybe;
   };
 
-  const fileType = getFileType(modelUrl);
+  const fileType = resolveFileType(modelUrl, propFileType);
 
   if (hasError || fileType === 'unsupported') {
     return (
