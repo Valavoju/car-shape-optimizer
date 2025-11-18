@@ -14,14 +14,36 @@ const Model = ({ url, fileType }: ModelProps) => {
   const meshRef = useRef<THREE.Group>(null);
   let modelObject: THREE.Group | THREE.Object3D | null = null;
 
+  // Convert Data URL to Blob URL if needed
+  const modelUrl = React.useMemo(() => {
+    if (url.startsWith('data:')) {
+      try {
+        const arr = url.split(',');
+        const mime = arr[0].match(/:(.*?);/)?.[1] || '';
+        const bstr = atob(arr[1]);
+        const n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        for (let i = 0; i < n; i++) {
+          u8arr[i] = bstr.charCodeAt(i);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        return URL.createObjectURL(blob);
+      } catch (error) {
+        console.error('Failed to convert data URL to blob:', error);
+        return url;
+      }
+    }
+    return url;
+  }, [url]);
+
   try {
     if (fileType === 'obj') {
       // Load OBJ file
-      const obj = useLoader(OBJLoader, url);
+      const obj = useLoader(OBJLoader, modelUrl);
       modelObject = obj;
     } else {
       // Load GLB/GLTF file
-      const gltf = useLoader(GLTFLoader, url);
+      const gltf = useLoader(GLTFLoader, modelUrl);
       modelObject = gltf.scene;
     }
   } catch (err) {
