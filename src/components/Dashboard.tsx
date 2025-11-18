@@ -12,8 +12,14 @@ import MaterialOptimizerTab from './MaterialOptimizerTab';
 import CatiaCopilot from './CatiaCopilot';
 
 const Dashboard = () => {
-  const [uploadedModel, setUploadedModel] = useState<string | null>(null);
-  const [uploadedFileType, setUploadedFileType] = useState<string | null>(null);
+  const [uploadedModel, setUploadedModel] = useState<string | null>(() => {
+    const saved = localStorage.getItem('uploadedModel');
+    return saved || null;
+  });
+  const [uploadedFileType, setUploadedFileType] = useState<string | null>(() => {
+    const saved = localStorage.getItem('uploadedFileType');
+    return saved || null;
+  });
   const [dragCoefficient, setDragCoefficient] = useState<number | null>(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -96,8 +102,19 @@ const Dashboard = () => {
         fileSize: file.size
       });
       
+      const fileType = file.name.split('.').pop()?.toLowerCase() || null;
+      
+      // Store in localStorage for persistence
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        localStorage.setItem('uploadedModel', base64);
+        if (fileType) localStorage.setItem('uploadedFileType', fileType);
+      };
+      reader.readAsDataURL(file);
+      
       setUploadedModel(url);
-      setUploadedFileType(file.name.split('.').pop()?.toLowerCase() || null);
+      setUploadedFileType(fileType);
       setIsAnalyzing(true);
       setAnalysisComplete(false);
       setDragCoefficient(null);
