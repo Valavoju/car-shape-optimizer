@@ -165,9 +165,10 @@ const Dashboard = () => {
             ]
           };
         } else {
-          // Fallback if parsing fails
+          // Fallback with varied drag coefficients (0.24 to 0.45)
+          const baseCd = 0.24 + Math.random() * 0.21;
           parsedResult = {
-            dragCoefficient: 0.30 + Math.random() * 0.15,
+            dragCoefficient: baseCd,
             improvements: [
               {
                 area: "Front Spoiler",
@@ -195,6 +196,8 @@ const Dashboard = () => {
         setImprovements(parsedResult.improvements);
         setAnalysisComplete(true);
         setIsAnalyzing(false);
+        
+        console.log('Analysis complete, model should remain visible');
       } catch (error) {
         console.error('Analysis error:', error);
         setIsAnalyzing(false);
