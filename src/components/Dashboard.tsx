@@ -12,20 +12,26 @@ import MaterialOptimizerTab from './MaterialOptimizerTab';
 import CatiaCopilot from './CatiaCopilot';
 
 const Dashboard = () => {
-  const [uploadedModel, setUploadedModel] = useState<string | null>(() => {
-    const saved = localStorage.getItem('uploadedModel');
-    return saved || null;
-  });
-  const [uploadedFileType, setUploadedFileType] = useState<string | null>(() => {
-    const saved = localStorage.getItem('uploadedFileType');
-    return saved || null;
-  });
+  const [uploadedModel, setUploadedModel] = useState<string | null>(null);
+  const [uploadedFileType, setUploadedFileType] = useState<string | null>(null);
   const [dragCoefficient, setDragCoefficient] = useState<number | null>(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [improvements, setImprovements] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load model from localStorage on mount
+  useEffect(() => {
+    const savedModel = localStorage.getItem('uploadedModel');
+    const savedFileType = localStorage.getItem('uploadedFileType');
+    
+    if (savedModel && savedFileType) {
+      console.log('Loading saved model from localStorage');
+      setUploadedModel(savedModel);
+      setUploadedFileType(savedFileType);
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkTheme);
@@ -78,7 +84,6 @@ const Dashboard = () => {
       if (nameLower.endsWith('.glb') || nameLower.endsWith('.gltf') || nameLower.endsWith('.obj')) {
       if (isAnalyzing) return;
       
-      const url = URL.createObjectURL(file);
       console.log('Starting file upload and analysis...', {
         fileName: file.name,
         fileType: file.type,
@@ -87,17 +92,22 @@ const Dashboard = () => {
       
       const fileType = file.name.split('.').pop()?.toLowerCase() || null;
       
-      // Store in localStorage for persistence
+      // Convert file to base64 Data URL and store in localStorage
       const reader = new FileReader();
       reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        localStorage.setItem('uploadedModel', base64);
+        const base64DataUrl = e.target?.result as string;
+        
+        // Store in localStorage for persistence
+        localStorage.setItem('uploadedModel', base64DataUrl);
         if (fileType) localStorage.setItem('uploadedFileType', fileType);
+        
+        // Set state with the base64 Data URL
+        setUploadedModel(base64DataUrl);
+        setUploadedFileType(fileType);
+        
+        console.log('Model stored in localStorage and state updated');
       };
       reader.readAsDataURL(file);
-      
-      setUploadedModel(url);
-      setUploadedFileType(fileType);
       setIsAnalyzing(true);
       setAnalysisComplete(false);
       setDragCoefficient(null);
