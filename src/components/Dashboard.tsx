@@ -31,30 +31,17 @@ const Dashboard = () => {
     document.documentElement.classList.toggle('dark', isDarkTheme);
   }, [isDarkTheme]);
 
-  const GEMINI_API_KEY = "AIzaSyB1IsMsk-0_Q-eu1ZTP8ORYsgeslzdrSrw";
-
-  const callGeminiAPI = async (prompt: string): Promise<string> => {
+  const callAeroAnalysisAPI = async (fileName: string): Promise<string> => {
     try {
-      console.log('Making Gemini API call with prompt:', prompt);
+      console.log('Calling aerodynamic analysis API for:', fileName);
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/aero-analysis`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          }
-        }),
+        body: JSON.stringify({ fileName }),
       });
 
       console.log('API Response status:', response.status);
@@ -68,13 +55,9 @@ const Dashboard = () => {
       const data = await response.json();
       console.log('API Response data:', data);
       
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-        throw new Error('Invalid response format from API');
-      }
-
-      return data.candidates[0].content.parts[0].text;
+      return data.analysis || "I'm having trouble processing your request right now. Please try again.";
     } catch (error) {
-      console.error('Gemini API error:', error);
+      console.error('Aero analysis API error:', error);
       return "I'm having trouble processing your request right now. Please try again.";
     }
   };
@@ -120,35 +103,59 @@ const Dashboard = () => {
       setDragCoefficient(null);
       setImprovements([]);
       
-      // Use Gemini API for real aerodynamic analysis
-      const analysisPrompt = `Analyze a ${file.name} 3D model for aerodynamic performance. Provide:
-1. A realistic drag coefficient (Cd) value between 0.25-0.45
-2. 4 specific aerodynamic improvement suggestions with detailed descriptions
-3. Each improvement should include the area, impact level (High/Medium/Low), description, and estimated Cd reduction
-
-Format your response as JSON with this structure:
-{
-  "dragCoefficient": number,
-  "improvements": [
-    {
-      "area": "string",
-      "impact": "High|Medium|Low", 
-      "description": "string",
-      "reduction": "string"
-    }
-  ]
-}`;
+      console.log('Starting AI analysis...');
+      
+      const aiResponse = await callAeroAnalysisAPI(file.name);
+      console.log('AI Response received:', aiResponse);
 
       try {
-        const analysisResult = await callGeminiAPI(analysisPrompt);
-        console.log('Raw Gemini response:', analysisResult);
-        
-        // Try to parse JSON response
+        // Parse the AI response
+        const cdMatch = aiResponse.match(/DRAG_COEFFICIENT:\s*([\d.]+)/);
+        const analysisMatch = aiResponse.match(/ANALYSIS:\s*([^\n]+)/);
+        const improvementsMatch = aiResponse.match(/IMPROVEMENTS:\s*([\s\S]+)/);
+
         let parsedResult;
-        try {
-          parsedResult = JSON.parse(analysisResult);
-        } catch {
-          // If JSON parsing fails, create a realistic response
+        if (cdMatch && improvementsMatch) {
+          const improvements = [];
+          const improvementLines = improvementsMatch[1].trim().split('\n');
+          
+          for (const line of improvementLines) {
+            const match = line.match(/\d+\.\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([\d.]+)/);
+            if (match) {
+              improvements.push({
+                area: match[1].trim(),
+                impact: "Medium",
+                description: match[2].trim(),
+                reduction: match[3].trim()
+              });
+            }
+          }
+
+          parsedResult = {
+            dragCoefficient: parseFloat(cdMatch[1]),
+            improvements: improvements.length > 0 ? improvements : [
+              {
+                area: "Front Spoiler",
+                impact: "High",
+                description: "Add front air dam to reduce airflow under vehicle",
+                reduction: "0.025"
+              },
+              {
+                area: "Rear Slope",
+                impact: "Medium", 
+                description: "Reduce rear window angle by 5-8 degrees",
+                reduction: "0.018"
+              },
+              {
+                area: "Side Mirrors",
+                impact: "Low",
+                description: "Streamline mirror housings and reduce frontal area", 
+                reduction: "0.008"
+              }
+            ]
+          };
+        } else {
+          // Fallback if parsing fails
           parsedResult = {
             dragCoefficient: 0.30 + Math.random() * 0.15,
             improvements: [
@@ -169,12 +176,6 @@ Format your response as JSON with this structure:
                 impact: "Low",
                 description: "Streamline mirror housings and reduce frontal area", 
                 reduction: "0.008"
-              },
-              {
-                area: "Wheel Wells",
-                impact: "Medium",
-                description: "Add wheel well covers and optimize tire geometry",
-                reduction: "0.012"
               }
             ]
           };
