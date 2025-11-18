@@ -10,6 +10,7 @@ import ErgonomicsTab from './ErgonomicsTab';
 import NvhTab from './NvhTab';
 import MaterialOptimizerTab from './MaterialOptimizerTab';
 import CatiaCopilot from './CatiaCopilot';
+import { saveModel, loadModel } from '@/lib/modelStorage';
 
 const Dashboard = () => {
   const [uploadedModel, setUploadedModel] = useState<string | null>(null);
@@ -21,16 +22,21 @@ const Dashboard = () => {
   const [improvements, setImprovements] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load model from localStorage on mount
+  // Load model from IndexedDB on mount
   useEffect(() => {
-    const savedModel = localStorage.getItem('uploadedModel');
-    const savedFileType = localStorage.getItem('uploadedFileType');
-    
-    if (savedModel && savedFileType) {
-      console.log('Loading saved model from localStorage');
-      setUploadedModel(savedModel);
-      setUploadedFileType(savedFileType);
-    }
+    const loadSavedModel = async () => {
+      try {
+        const savedModel = await loadModel();
+        if (savedModel) {
+          console.log('Loading saved model from IndexedDB');
+          setUploadedModel(savedModel.dataUrl);
+          setUploadedFileType(savedModel.fileType);
+        }
+      } catch (error) {
+        console.error('Error loading saved model:', error);
+      }
+    };
+    loadSavedModel();
   }, []);
 
   useEffect(() => {
@@ -92,20 +98,26 @@ const Dashboard = () => {
       
       const fileType = file.name.split('.').pop()?.toLowerCase() || null;
       
-      // Convert file to base64 Data URL and store in localStorage
+      // Convert file to base64 Data URL and store in IndexedDB
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const base64DataUrl = e.target?.result as string;
         
-        // Store in localStorage for persistence
-        localStorage.setItem('uploadedModel', base64DataUrl);
-        if (fileType) localStorage.setItem('uploadedFileType', fileType);
-        
-        // Set state with the base64 Data URL
-        setUploadedModel(base64DataUrl);
-        setUploadedFileType(fileType);
-        
-        console.log('Model stored in localStorage and state updated');
+        try {
+          // Store in IndexedDB for persistence (handles large files)
+          await saveModel(base64DataUrl, fileType || 'glb');
+          
+          // Set state with the base64 Data URL
+          setUploadedModel(base64DataUrl);
+          setUploadedFileType(fileType);
+          
+          console.log('Model stored in IndexedDB and state updated');
+        } catch (error) {
+          console.error('Failed to save model:', error);
+          // Still set state even if storage fails
+          setUploadedModel(base64DataUrl);
+          setUploadedFileType(fileType);
+        }
       };
       reader.readAsDataURL(file);
       setIsAnalyzing(true);
