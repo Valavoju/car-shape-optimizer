@@ -106,12 +106,12 @@ const Dashboard = () => {
         try {
           // Store in IndexedDB for persistence (handles large files)
           await saveModel(base64DataUrl, fileType || 'glb');
+          console.log('Model saved to IndexedDB successfully');
           
-          // Set state with the base64 Data URL
+          // CRITICAL: Set state immediately with the base64 Data URL
           setUploadedModel(base64DataUrl);
           setUploadedFileType(fileType);
           
-          console.log('Model stored in IndexedDB and state updated');
         } catch (error) {
           console.error('Failed to save model:', error);
           // Still set state even if storage fails
@@ -120,12 +120,14 @@ const Dashboard = () => {
         }
       };
       reader.readAsDataURL(file);
+      
+      // Start analysis (doesn't affect model display)
       setIsAnalyzing(true);
       setAnalysisComplete(false);
       setDragCoefficient(null);
       setImprovements([]);
       
-      console.log('Starting AI analysis...');
+      console.log('Starting AI analysis for:', file.name);
       
       const aiResponse = await callAeroAnalysisAPI(file.name);
       console.log('AI Response received:', aiResponse);
@@ -209,10 +211,11 @@ const Dashboard = () => {
         setAnalysisComplete(true);
         setIsAnalyzing(false);
         
-        console.log('Analysis complete, model should remain visible');
+        console.log('Analysis complete - model persists with Cd:', parsedResult.dragCoefficient);
       } catch (error) {
         console.error('Analysis error:', error);
         setIsAnalyzing(false);
+        // Model remains loaded even if analysis fails
       }
     }
     }

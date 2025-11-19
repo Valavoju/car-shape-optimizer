@@ -14,7 +14,7 @@ const Model = ({ url, fileType }: ModelProps) => {
   const meshRef = useRef<THREE.Group>(null);
   let modelObject: THREE.Group | THREE.Object3D | null = null;
 
-  // Convert Data URL to Blob URL if needed
+  // Convert Data URL to Blob URL if needed - with cleanup
   const modelUrl = React.useMemo(() => {
     if (url.startsWith('data:')) {
       try {
@@ -27,7 +27,9 @@ const Model = ({ url, fileType }: ModelProps) => {
           u8arr[i] = bstr.charCodeAt(i);
         }
         const blob = new Blob([u8arr], { type: mime });
-        return URL.createObjectURL(blob);
+        const blobUrl = URL.createObjectURL(blob);
+        console.log('Created blob URL for model:', blobUrl);
+        return blobUrl;
       } catch (error) {
         console.error('Failed to convert data URL to blob:', error);
         return url;
@@ -35,6 +37,16 @@ const Model = ({ url, fileType }: ModelProps) => {
     }
     return url;
   }, [url]);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (modelUrl && modelUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(modelUrl);
+        console.log('Cleaned up blob URL');
+      }
+    };
+  }, [modelUrl]);
 
   try {
     if (fileType === 'obj') {
