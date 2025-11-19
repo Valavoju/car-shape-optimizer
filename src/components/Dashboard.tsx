@@ -20,11 +20,13 @@ const Dashboard = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [improvements, setImprovements] = useState<any[]>([]);
+  const [isLoadingModel, setIsLoadingModel] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load model from IndexedDB on mount
   useEffect(() => {
     const loadSavedModel = async () => {
+      setIsLoadingModel(true);
       try {
         const savedModel = await loadModel();
         if (savedModel) {
@@ -34,6 +36,8 @@ const Dashboard = () => {
         }
       } catch (error) {
         console.error('Error loading saved model:', error);
+      } finally {
+        setIsLoadingModel(false);
       }
     };
     loadSavedModel();
@@ -331,12 +335,20 @@ const Dashboard = () => {
                   <CardTitle className={textClasses}>3D Model Viewer</CardTitle>
                 </CardHeader>
                 <CardContent className="h-80">
-                  {uploadedModel && uploadedFileType && (
+                  {isLoadingModel ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                  ) : uploadedModel && uploadedFileType ? (
                     <ModelViewer 
                       key={uploadedModel.substring(0, 100)} 
                       modelUrl={uploadedModel} 
                       fileType={uploadedFileType} 
                     />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      No model loaded
+                    </div>
                   )}
                 </CardContent>
               </Card>
