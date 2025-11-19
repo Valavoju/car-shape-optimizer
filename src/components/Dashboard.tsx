@@ -270,47 +270,49 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Upload Section */}
-        {!uploadedModel && (
-          <Card className={`mb-8 ${cardClasses} backdrop-blur-sm`}>
-            <CardHeader>
-              <CardTitle className={`flex items-center gap-2 ${textClasses}`}>
-                <Upload className="h-6 w-6" />
-                Upload 3D Model
-              </CardTitle>
-              <CardDescription className={mutedTextClasses}>
-                Upload your car model for aerodynamic analysis. Supports GLB, GLTF, and OBJ formats. 
-                <span className="block text-yellow-500 text-xs mt-1">Note: BLEND files must be exported to GLB/OBJ first</span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-                isDarkTheme 
-                  ? 'border-gray-600 hover:border-gray-500 bg-gray-700' 
-                  : 'border-gray-300 hover:border-gray-400 bg-gray-100'
-              }`}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".glb,.gltf,.obj"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="model-upload"
-                />
-                <label htmlFor="model-upload" className="cursor-pointer">
-                  <Upload className={`h-16 w-16 mx-auto mb-4 ${mutedTextClasses}`} />
-                  <p className={`text-xl mb-2 ${textClasses}`}>Drop your 3D model here</p>
-                  <p className={`mb-2 ${mutedTextClasses}`}>Supports GLB, GLTF, and OBJ formats</p>
-                  <p className={`text-sm ${mutedTextClasses}`}>Recommended: Use GLB format for better compatibility</p>
-                  <p className={`text-xs text-yellow-500 mt-2`}>BLEND files: Export as GLB/OBJ from Blender</p>
-                  <Button variant="secondary" className="mt-4">
-                    Browse Files
-                  </Button>
-                </label>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Upload Section - Always Visible */}
+        <Card className={`mb-8 ${cardClasses} backdrop-blur-sm`}>
+          <CardHeader>
+            <CardTitle className={`flex items-center gap-2 ${textClasses}`}>
+              <Upload className="h-6 w-6" />
+              Upload 3D Model
+            </CardTitle>
+            <CardDescription className={mutedTextClasses}>
+              Upload your car model for aerodynamic analysis. Supports GLB, GLTF, and OBJ formats. 
+              <span className="block text-yellow-500 text-xs mt-1">Note: BLEND files must be exported to GLB/OBJ first</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              isDarkTheme 
+                ? 'border-gray-600 hover:border-gray-500 bg-gray-700' 
+                : 'border-gray-300 hover:border-gray-400 bg-gray-100'
+            }`}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".glb,.gltf,.obj"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="model-upload"
+              />
+              <label htmlFor="model-upload" className="cursor-pointer">
+                <Upload className={`h-12 w-12 mx-auto mb-3 ${mutedTextClasses}`} />
+                <p className={`text-lg mb-2 ${textClasses}`}>
+                  {uploadedModel ? 'Upload New Model' : 'Drop your 3D model here'}
+                </p>
+                <p className={`text-sm mb-2 ${mutedTextClasses}`}>Supports GLB, GLTF, and OBJ formats</p>
+                <Button 
+                  variant="secondary" 
+                  className="mt-3"
+                  disabled={isAnalyzing}
+                >
+                  {isAnalyzing ? 'Analyzing...' : 'Browse Files'}
+                </Button>
+              </label>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* CATIA Copilot Section */}
         {!uploadedModel && (
