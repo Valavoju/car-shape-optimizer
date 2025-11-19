@@ -331,7 +331,13 @@ const Dashboard = () => {
                   <CardTitle className={textClasses}>3D Model Viewer</CardTitle>
                 </CardHeader>
                 <CardContent className="h-80">
-                  <ModelViewer modelUrl={uploadedModel} fileType={uploadedFileType || undefined} />
+                  {uploadedModel && uploadedFileType && (
+                    <ModelViewer 
+                      key={uploadedModel.substring(0, 100)} 
+                      modelUrl={uploadedModel} 
+                      fileType={uploadedFileType} 
+                    />
+                  )}
                 </CardContent>
               </Card>
             </div>

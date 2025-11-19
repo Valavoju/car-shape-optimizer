@@ -172,6 +172,10 @@ const ModelViewer = ({ modelUrl, fileType: propFileType }: ModelViewerProps) => 
 
   // Reset error state when model URL changes
   useEffect(() => {
+    console.log('ModelViewer received:', { 
+      modelUrl: modelUrl?.substring(0, 50), 
+      fileType: propFileType 
+    });
     setHasError(false);
     setErrorMessage('');
   }, [modelUrl, propFileType]);
