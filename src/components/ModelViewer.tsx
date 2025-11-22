@@ -228,7 +228,6 @@ const ModelViewer = ({ modelUrl, fileType: propFileType }: ModelViewerProps) => 
           maxDistance={10}
           minDistance={1}
         />
-        <Environment preset="studio" />
       </Canvas>
     </div>
   );
