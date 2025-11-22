@@ -12,7 +12,6 @@ interface ModelProps {
 
 const Model = ({ url, fileType }: ModelProps) => {
   const meshRef = useRef<THREE.Group>(null);
-  let modelObject: THREE.Group | THREE.Object3D | null = null;
 
   // Convert Data URL to Blob URL if needed - with cleanup
   const modelUrl = React.useMemo(() => {
@@ -48,19 +47,17 @@ const Model = ({ url, fileType }: ModelProps) => {
     };
   }, [modelUrl]);
 
-  try {
-    if (fileType === 'obj') {
-      // Load OBJ file
-      const obj = useLoader(OBJLoader, modelUrl);
-      modelObject = obj;
-    } else {
-      // Load GLB/GLTF file
-      const gltf = useLoader(GLTFLoader, modelUrl);
-      modelObject = gltf.scene;
-    }
-  } catch (err) {
-    console.error(`Failed to load ${fileType.toUpperCase()} model:`, err);
-    throw new Error(`Failed to load 3D model. Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  // Load the model - let Suspense and ErrorBoundary handle errors
+  let model: THREE.Group | THREE.Object3D;
+  
+  if (fileType === 'obj') {
+    // Load OBJ file
+    const obj = useLoader(OBJLoader, modelUrl);
+    model = obj;
+  } else {
+    // Load GLB/GLTF file
+    const gltf = useLoader(GLTFLoader, modelUrl);
+    model = gltf.scene;
   }
 
   useFrame((state) => {
@@ -69,12 +66,8 @@ const Model = ({ url, fileType }: ModelProps) => {
     }
   });
 
-  if (!modelObject) {
-    return null;
-  }
-
   // Clone the scene to avoid issues with multiple instances
-  const clonedScene = modelObject.clone();
+  const clonedScene = model.clone();
   
   // Add default material to OBJ files if they don't have one
   if (fileType === 'obj') {
