@@ -5,60 +5,17 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as THREE from 'three';
 
-interface ModelProps {
+interface GLBModelProps {
   url: string;
-  fileType: string;
 }
 
-const Model = ({ url, fileType }: ModelProps) => {
+interface OBJModelProps {
+  url: string;
+}
+
+const GLBModel = ({ url }: GLBModelProps) => {
   const meshRef = useRef<THREE.Group>(null);
-
-  // Convert Data URL to Blob URL if needed - with cleanup
-  const modelUrl = React.useMemo(() => {
-    if (url.startsWith('data:')) {
-      try {
-        const arr = url.split(',');
-        const mime = arr[0].match(/:(.*?);/)?.[1] || '';
-        const bstr = atob(arr[1]);
-        const n = bstr.length;
-        const u8arr = new Uint8Array(n);
-        for (let i = 0; i < n; i++) {
-          u8arr[i] = bstr.charCodeAt(i);
-        }
-        const blob = new Blob([u8arr], { type: mime });
-        const blobUrl = URL.createObjectURL(blob);
-        console.log('Created blob URL for model:', blobUrl);
-        return blobUrl;
-      } catch (error) {
-        console.error('Failed to convert data URL to blob:', error);
-        return url;
-      }
-    }
-    return url;
-  }, [url]);
-
-  // Cleanup blob URL on unmount
-  useEffect(() => {
-    return () => {
-      if (modelUrl && modelUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(modelUrl);
-        console.log('Cleaned up blob URL');
-      }
-    };
-  }, [modelUrl]);
-
-  // Load the model - let Suspense and ErrorBoundary handle errors
-  let model: THREE.Group | THREE.Object3D;
-  
-  if (fileType === 'obj') {
-    // Load OBJ file
-    const obj = useLoader(OBJLoader, modelUrl);
-    model = obj;
-  } else {
-    // Load GLB/GLTF file
-    const gltf = useLoader(GLTFLoader, modelUrl);
-    model = gltf.scene;
-  }
+  const gltf = useLoader(GLTFLoader, url);
 
   useFrame((state) => {
     if (meshRef.current) {
@@ -66,23 +23,49 @@ const Model = ({ url, fileType }: ModelProps) => {
     }
   });
 
-  // Clone the scene to avoid issues with multiple instances
-  const clonedScene = model.clone();
+  const clonedScene = gltf.scene.clone();
+  
+  // Scale and center the model
+  const box = new THREE.Box3().setFromObject(clonedScene);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 2 / maxDim;
+  
+  clonedScene.scale.setScalar(scale);
+  clonedScene.position.sub(center.multiplyScalar(scale));
+
+  return (
+    <group ref={meshRef}>
+      <primitive object={clonedScene} />
+    </group>
+  );
+};
+
+const OBJModel = ({ url }: OBJModelProps) => {
+  const meshRef = useRef<THREE.Group>(null);
+  const obj = useLoader(OBJLoader, url);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime) * 0.1;
+    }
+  });
+
+  const clonedScene = obj.clone();
   
   // Add default material to OBJ files if they don't have one
-  if (fileType === 'obj') {
-    clonedScene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
-          child.material = new THREE.MeshStandardMaterial({ 
-            color: 0xcccccc,
-            metalness: 0.3,
-            roughness: 0.7
-          });
-        }
+  clonedScene.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+        child.material = new THREE.MeshStandardMaterial({ 
+          color: 0xcccccc,
+          metalness: 0.3,
+          roughness: 0.7
+        });
       }
-    });
-  }
+    }
+  });
   
   // Scale and center the model
   const box = new THREE.Box3().setFromObject(clonedScene);
@@ -220,7 +203,11 @@ const ModelViewer = ({ modelUrl, fileType: propFileType }: ModelViewerProps) => 
         
         <Suspense fallback={<LoadingSpinner />}>
           <ModelErrorBoundary fallback={<ErrorModel />} onError={handleError}>
-            <Model url={modelUrl} fileType={fileType} />
+            {fileType === 'obj' ? (
+              <OBJModel url={modelUrl} />
+            ) : (
+              <GLBModel url={modelUrl} />
+            )}
           </ModelErrorBoundary>
         </Suspense>
         
