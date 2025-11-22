@@ -335,16 +335,15 @@ const Dashboard = () => {
                   <CardTitle className={textClasses}>3D Model Viewer</CardTitle>
                 </CardHeader>
                 <CardContent className="h-80">
-                  {isLoadingModel ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                    </div>
-                  ) : uploadedModel && uploadedFileType ? (
+                  {!isLoadingModel && uploadedModel && uploadedFileType ? (
                     <ModelViewer 
-                      key={uploadedModel.substring(0, 100)} 
                       modelUrl={uploadedModel} 
                       fileType={uploadedFileType} 
                     />
+                  ) : isLoadingModel ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                       No model loaded
