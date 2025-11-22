@@ -211,9 +211,12 @@ const ModelViewer = ({ modelUrl, fileType: propFileType }: ModelViewerProps) => 
   return (
     <div className="w-full h-full bg-gray-900 rounded-lg overflow-hidden">
       <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} />
+        <color attach="background" args={['#1a1a1a']} />
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[10, 10, 5]} intensity={1.5} castShadow />
+        <directionalLight position={[-10, -10, -5]} intensity={0.8} />
+        <pointLight position={[0, 10, 0]} intensity={1} />
+        <spotLight position={[5, 5, 5]} angle={0.3} intensity={1} />
         
         <Suspense fallback={<LoadingSpinner />}>
           <ModelErrorBoundary fallback={<ErrorModel />} onError={handleError}>
